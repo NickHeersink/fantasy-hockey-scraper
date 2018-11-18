@@ -18,8 +18,13 @@ def login(driver):
 	driver.find_element_by_id('login-signin').click()
 
 def get_draft_results(driver):
-	player_list = [for name in driver.find_element_by_id()]
+	draft_order = ['bohan', 'nico', 'calvin', 'nick', 'tim', 'joel', 'jeremy', 'nate']
+	draft_order = draft_order + draft_order[::-1]
 
+	player_web_elem_list = driver.find_elements_by_class_name('name')
+	player_list = [player.text for player in player_web_elem_list]
+
+	draft_order_list = draft_order*13
 
 def make_connection():
 	driver = webdriver.Chrome()
@@ -29,6 +34,7 @@ def make_connection():
 
 	get_draft_results(driver)
 
+	driver.close()
 
 def main():
 	print('Welcome to the Non-Competitive Action League')
