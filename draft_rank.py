@@ -30,8 +30,33 @@ def get_draft_results(driver):
 
 	return players, draft_order
 
+# Get the player rankings from the player page
 def get_player_ranks(driver, players):
-	print('hi')
+	driver.get(settings.YAHOO_RANK_URL)
+
+	search_box = driver.find_element_by_id('playersearchtext')
+
+	ranks = []
+
+	for index, player in enumerate(players):
+		print player
+
+		search_box.clear()
+		search_box.send_keys(player)
+		search_box.send_keys(u'\ue007') # Press enter - TODO replace with clicking 'Search' button
+
+		time.sleep(10)
+
+		table = driver.find_element_by_class_name('players-table')
+		rows = table.find_elements_by_tag_name('tr')
+
+		# The current ranking can be found in column 2, row 6.
+		columns = rows[2].find_elements_by_tag_name('td')
+		ranks.append(columns[6].text)
+
+		print('Ranking is: ' + ranks[index])
+
+	return ranks
 
 # Store info in .dat file
 def store_info(players, draft_order, ranks):
@@ -44,10 +69,8 @@ def store_info(players, draft_order, ranks):
 def get_stored_info():
 	file = open('data.pickle', 'rb')		
 	players = pickle.load(file)
-	draft_order = []
-	ranks = []
-	#draft_order = pickle.load(file)
-	#ranks = pickle.load(file)
+	draft_order = pickle.load(file)
+	ranks = pickle.load(file)
 
 	return players, draft_order, ranks
 
@@ -74,7 +97,8 @@ def main():
 		driver.set_page_load_timeout(60)
 		make_connection(driver)
 
-		players, draft_order = get_draft_results(driver)
+		#players, draft_order = get_draft_results(driver)
+		players, draft_order, ranks = get_stored_info()
 		ranks = get_player_ranks(driver, players)
 
 		store_info(players, draft_order, ranks)
@@ -83,6 +107,8 @@ def main():
 	else:
 		players, draft_order, ranks = get_stored_info()
 
+	import pdb
+	pdb.set_trace()
 	plot_draft_results(players, draft_order)
 
 
