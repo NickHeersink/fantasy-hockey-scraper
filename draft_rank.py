@@ -29,7 +29,7 @@ def get_draft_results(driver):
 	return players
 
 def get_draft_order():
-	draft_order = ['bohan', 'nico', 'calvin', 'nick', 'tim', 'joel', 'jeremy', 'nate']
+	draft_order = SETTINGS.DRAFT_ORDER
 	draft_order = draft_order + draft_order[::-1]
 
 	draft_order *= 13
@@ -80,15 +80,19 @@ def get_stored_info():
 
 	return players, draft_order, ranks
 
+def get_player_lists_by_person(players, draft_order):
+	players_by_person = {}
+
+	for person in settings.DRAFT_ORDER:
+		players_by_person[person] = [player for index, player in enumerate(players) if person == draft_order[index]]
+
 # Plot the results
 def plot_draft_results(players, draft_order, draft_spots, ranks):
 	ranks = [int(rank) for rank in ranks] # Convert strings to integers
 
-	plt.scatter(draft_spots, ranks)
+	get_player_lists_by_person(players, draft_order)
 
-	import pdb
-	pdb.set_trace()
-	
+	plt.scatter(draft_spots, ranks)
 	plt.show()
 	
 # Clean up the Chrome webdriver
