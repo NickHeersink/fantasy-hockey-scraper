@@ -4,6 +4,9 @@ import pickle
 import settings
 import time
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 # Connect to Yahoo Fantasy
 def login(driver):
 	driver.get(settings.YAHOO_DRAFT_URL)
@@ -81,10 +84,6 @@ def get_stored_info():
 def plot_draft_results(players, draft_order):
 	print('hello')
 
-# Login to the Yahoo site
-def make_connection(driver):
-	login(driver)
-
 # Clean up the Chrome webdriver
 def end_connection(driver):
 	driver.close()
@@ -95,7 +94,7 @@ def main():
 	if settings.NEED_NEW_DATA:
 		driver = webdriver.Chrome()
 		driver.set_page_load_timeout(60)
-		make_connection(driver)
+		login(driver)
 
 		players = get_draft_results(driver)
 		draft_order = get_draft_order()
