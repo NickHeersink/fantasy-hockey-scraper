@@ -62,7 +62,7 @@ def get_player_ranks(driver, players):
 
 		print('Ranking is: ' + ranks[index])
 
-	return ranks
+	return [int(rank) for rank in ranks] # Returns a list of integers instead of strings
 
 # Store info in .dat file
 def store_info(players, draft_order, ranks):
@@ -81,9 +81,16 @@ def get_stored_info():
 	return players, draft_order, ranks
 
 # Plot the results
-def plot_draft_results(players, draft_order):
-	print('hello')
+def plot_draft_results(players, draft_order, draft_spots, ranks):
+	ranks = [int(rank) for rank in ranks] # Convert strings to integers
 
+	plt.scatter(draft_spots, ranks)
+
+	import pdb
+	pdb.set_trace()
+	
+	plt.show()
+	
 # Clean up the Chrome webdriver
 def end_connection(driver):
 	driver.close()
@@ -106,7 +113,8 @@ def main():
 	else:
 		players, draft_order, ranks = get_stored_info()
 
-	plot_draft_results(players, draft_order)
+	draft_spots = np.arange(1,209)
+	plot_draft_results(players, draft_order, draft_spots, ranks)
 
 
 if __name__ == "__main__":
