@@ -20,15 +20,18 @@ def login(driver):
 
 # Get draft results
 def get_draft_results(driver):
-	draft_order = ['bohan', 'nico', 'calvin', 'nick', 'tim', 'joel', 'jeremy', 'nate']
-	draft_order = draft_order + draft_order[::-1]
-
 	players_web_elems = driver.find_elements_by_class_name('name')
 	players = [player.text for player in players_web_elems]
 
+	return players
+
+def get_draft_order():
+	draft_order = ['bohan', 'nico', 'calvin', 'nick', 'tim', 'joel', 'jeremy', 'nate']
+	draft_order = draft_order + draft_order[::-1]
+
 	draft_order *= 13
 
-	return players, draft_order
+	return draft_order
 
 # Get the player rankings from the player page
 def get_player_ranks(driver, players):
@@ -89,16 +92,13 @@ def end_connection(driver):
 def main():
 	print('Welcome to the Non-Competitive Action League')
 
-	# Set this to pull new data
-	need_new_data = False
-
-	if need_new_data:
+	if settings.NEED_NEW_DATA:
 		driver = webdriver.Chrome()
 		driver.set_page_load_timeout(60)
 		make_connection(driver)
 
-		#players, draft_order = get_draft_results(driver)
-		players, draft_order, ranks = get_stored_info()
+		players = get_draft_results(driver)
+		draft_order = get_draft_order()
 		ranks = get_player_ranks(driver, players)
 
 		store_info(players, draft_order, ranks)
@@ -107,8 +107,6 @@ def main():
 	else:
 		players, draft_order, ranks = get_stored_info()
 
-	import pdb
-	pdb.set_trace()
 	plot_draft_results(players, draft_order)
 
 
