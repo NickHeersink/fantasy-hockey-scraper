@@ -80,19 +80,27 @@ def get_stored_info():
 
 	return players, draft_order, ranks
 
-def get_player_lists_by_person(players, draft_order):
-	players_by_person = {}
+def get_player_lists_by_person(person, players, draft_order):
+	return [player for index, player in enumerate(players) if person == draft_order[index]]
 
-	for person in settings.DRAFT_ORDER:
-		players_by_person[person] = [player for index, player in enumerate(players) if person == draft_order[index]]
+def get_player_ranks_by_person(person, players, personal_players, ranks):
+	return [rank for index, rank in enumerate(ranks) if players[index] in personal_players]
+
+def get_draft_spots_by_person(person, players, personal_players, draft_spots):
+	return [draft_spot for index, draft_spot in enumerate(draft_spots) if players[index] in personal_players]
 
 # Plot the results
 def plot_draft_results(players, draft_order, draft_spots, ranks):
 	ranks = [int(rank) for rank in ranks] # Convert strings to integers
 
-	get_player_lists_by_person(players, draft_order)
+	for index, person in enumerate(settings.DRAFT_ORDER):
+		personal_players = get_player_lists_by_person(person, players, draft_order)
+		personal_ranks = get_player_ranks_by_person(person, players, personal_players, ranks)
+		personal_draft = get_draft_spots_by_person(person, players, personal_players, draft_spots)
 
-	plt.scatter(draft_spots, ranks)
+		plt.scatter(personal_draft, personal_ranks)
+		plt.hold()
+	
 	plt.show()
 	
 # Clean up the Chrome webdriver
