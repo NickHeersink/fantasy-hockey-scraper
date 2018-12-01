@@ -93,16 +93,19 @@ def get_draft_spots_by_person(person, players, personal_players, draft_spots):
 def plot_draft_results(players, draft_order, draft_spots, ranks):
 	ranks = [int(rank) for rank in ranks] # Convert strings to integers
 
-	for index, person in enumerate(settings.DRAFT_ORDER):
+	fig = plt.figure()
+	ax = fig.add_subplot(111)
+
+	for person in settings.DRAFT_ORDER:
 		personal_players = get_player_lists_by_person(person, players, draft_order)
 		personal_ranks = get_player_ranks_by_person(person, players, personal_players, ranks)
 		personal_draft = get_draft_spots_by_person(person, players, personal_players, draft_spots)
 
-		plt.scatter(personal_draft, personal_ranks)
-		plt.hold()
-	
+		ax.scatter(personal_draft, personal_ranks, label=person)
+
+	plt.legend(loc='upper left')
 	plt.show()
-	
+
 # Clean up the Chrome webdriver
 def end_connection(driver):
 	driver.close()
