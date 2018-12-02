@@ -30,7 +30,7 @@ def get_draft_results(driver):
 	return players
 
 def get_draft_order():
-	draft_order = SETTINGS.DRAFT_ORDER
+	draft_order = settings.DRAFT_ORDER
 	draft_order = draft_order + draft_order[::-1]
 
 	draft_order *= 13
