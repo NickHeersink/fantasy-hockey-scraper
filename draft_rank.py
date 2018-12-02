@@ -2,6 +2,7 @@ from selenium import webdriver
 
 import pickle
 import settings
+import stats
 import time
 
 import matplotlib.pyplot as plt
@@ -103,7 +104,19 @@ def plot_draft_results(players, draft_order, draft_spots, ranks):
 
 		ax.scatter(personal_draft, personal_ranks, label=person)
 
+	a, b = stats.get_line_of_best_fit_params(draft_spots, ranks)
+
+	yhat = [a + b*x for x in draft_spots]
+
+	r_squared = stats.calculate_coeff_determination(draft_spots, ranks, yhat)
+
+	plt.plot(draft_spots, yhat)
+
 	plt.legend(loc='upper left')
+	plt.xlabel('Draft Position')
+	plt.ylabel('Ranking')
+	plt.title('R-squared value: ' + str(r_squared))
+
 	plt.show()
 
 # Clean up the Chrome webdriver
