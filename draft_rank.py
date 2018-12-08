@@ -1,12 +1,13 @@
-from selenium import webdriver
-
-import pickle
-import settings
-import stats
 import time
 
+import pickle
+import pandas
 import matplotlib.pyplot as plt
-import numpy as np
+
+from selenium import webdriver
+
+import settings
+import stats
 
 # Connect to Yahoo Fantasy
 def login(driver):
@@ -29,11 +30,12 @@ def get_draft_results(driver):
 
 	return players
 
+# Gets draft order (can be done offline knowing the order repeats)
 def get_draft_order():
 	draft_order = settings.DRAFT_ORDER
-	draft_order = draft_order + draft_order[::-1]
+	draft_order = draft_order + draft_order.reverse()
 
-	draft_order *= 13
+	draft_order *= 13 # order repeats 13 times
 
 	return draft_order
 
@@ -65,21 +67,17 @@ def get_player_ranks(driver, players):
 
 	return [int(rank) for rank in ranks] # Returns a list of integers instead of strings
 
-# Store info in .dat file
+# Store info in .csv file using Pandas
 def store_info(players, draft_order, ranks):
-	with open('data.pickle', 'wb') as file:
-		pickle.dump(players, file)
-		pickle.dump(draft_order, file)
-		pickle.dump(ranks, file)
+	fantasy_data = list(zip(players, draft_order, ranks))
 
-# Retrieve stored info from .dat file
-def get_stored_info():
-	file = open('data.pickle', 'rb')		
-	players = pickle.load(file)
-	draft_order = pickle.load(file)
-	ranks = pickle.load(file)
+	df = pandas.DataFrame(data=fantasy_data, columns=['Player', 'Drafter', 'Rank'])
+	df.to_csv(settings.CSV_FILE_NAME)
 
-	return players, draft_order, ranks
+	return df
+
+def get_info():
+	return pandas.read_csv(settings.CSV_FILE_NAME, index_col=0)
 
 def get_player_lists_by_person(person, players, draft_order):
 	return [player for index, player in enumerate(players) if person == draft_order[index]]
@@ -135,14 +133,14 @@ def main():
 		draft_order = get_draft_order()
 		ranks = get_player_ranks(driver, players)
 
-		store_info(players, draft_order, ranks)
-	
+		df = store_info(players, draft_order, ranks)
+
 		end_connection(driver)
 	else:
-		players, draft_order, ranks = get_stored_info()
+		df = get_info()
 
-	draft_spots = np.arange(1,209)
-	plot_draft_results(players, draft_order, draft_spots, ranks)
+	draft_spots = [i for i in range(1, 209)]
+	plot_draft_results(df['Player'].tolist(), df['Drafter'].tolist(), df.index.values, df['Rank'].tolist())
 
 
 if __name__ == "__main__":
