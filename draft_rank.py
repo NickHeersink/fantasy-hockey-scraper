@@ -79,41 +79,60 @@ def store_info(players, draft_order, ranks):
 def get_info():
 	return pandas.read_csv(settings.CSV_FILE_NAME, index_col=0)
 
-def get_player_lists_by_person(person, players, draft_order):
-	return [player for index, player in enumerate(players) if person == draft_order[index]]
+def get_player_lists_by_person(df, person):
+	return df.Player[df.Drafter == person]
 
-def get_player_ranks_by_person(person, players, personal_players, ranks):
-	return [rank for index, rank in enumerate(ranks) if players[index] in personal_players]
+def get_player_ranks_by_person(df, person):
+	return df.Rank[df.Drafter == person]
 
-def get_draft_spots_by_person(person, players, personal_players, draft_spots):
-	return [draft_spot for index, draft_spot in enumerate(draft_spots) if players[index] in personal_players]
+def get_draft_spots_by_person(df, person):
+	return df.index.values[df.Drafter == person]
+
+# Get the residuals and add a column to the Pandas dataframe
+def calculate_residuals(df, expected_ranks):
+	residuals = [expected_rank - actual_rank for expected_rank, actual_rank in zip(expected_ranks, df.Rank)]
+
+	# 'Normalize' ranks so that the further ones are less costly
+	df['Residual'] = [residual for index, residual in enumerate(residuals)]
+
+def add_large_residuals(df, ax):
+	worst_players = df.nsmallest(3, 'Residual')
+	best_players = df.nlargest(3, 'Residual')
+
+	for player in best_players.itertuples():
+		ax.annotate(player.Player, xy=(player.Index, player.Rank), textcoords = 'data')
+
+	for player in worst_players.itertuples():
+		ax.annotate(player.Player, xy=(player.Index, player.Rank), textcoords = 'data')
 
 # Plot the results
-def plot_draft_results(players, draft_order, draft_spots, ranks):
-	ranks = [int(rank) for rank in ranks] # Convert strings to integers
-
+def plot_draft_results(df):
 	fig = plt.figure()
 	ax = fig.add_subplot(111)
 
 	for person in settings.DRAFT_ORDER:
-		personal_players = get_player_lists_by_person(person, players, draft_order)
-		personal_ranks = get_player_ranks_by_person(person, players, personal_players, ranks)
-		personal_draft = get_draft_spots_by_person(person, players, personal_players, draft_spots)
+		personal_players = get_player_lists_by_person(df, person)
+		personal_ranks = get_player_ranks_by_person(df, person)
+		personal_draft = get_draft_spots_by_person(df, person)
 
 		ax.scatter(personal_draft, personal_ranks, label=person)
 
-	a, b = stats.get_line_of_best_fit_params(draft_spots, ranks)
+	a, b = stats.get_line_of_best_fit_params(df.index.values, df.Rank)
 
-	yhat = [a + b*x for x in draft_spots]
+	df['Expected'] = [a + b*x for x in df.index.values]
 
-	r_squared = stats.calculate_coeff_determination(draft_spots, ranks, yhat)
+	residuals = calculate_residuals(df, df['Expected'])
 
-	plt.plot(draft_spots, yhat)
+	r_squared = stats.calculate_coeff_determination(df.index.values, df.Rank, df.Expected)
+
+	plt.plot(df.index.values, df.Expected)
 
 	plt.legend(loc='upper left')
 	plt.xlabel('Draft Position')
 	plt.ylabel('Ranking')
 	plt.title('R-squared value: ' + str(r_squared))
+
+	add_large_residuals(df, ax)
 
 	plt.show()
 
@@ -139,8 +158,7 @@ def main():
 	else:
 		df = get_info()
 
-	draft_spots = [i for i in range(1, 209)]
-	plot_draft_results(df['Player'].tolist(), df['Drafter'].tolist(), df.index.values, df['Rank'].tolist())
+	plot_draft_results(df)
 
 
 if __name__ == "__main__":
