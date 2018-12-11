@@ -67,6 +67,22 @@ def get_player_ranks(driver, players):
 
 	return [int(rank) for rank in ranks] # Returns a list of integers instead of strings
 
+def get_the_real_aho(driver):
+	search_box = driver.find_element_by_id('playersearchtext')
+
+	search_box.clear()
+	search_box.send_keys('Sebastian Aho')
+	search_box.send_keys(u'\ue007') # Press enter - TODO replace with clicking 'Search' button
+
+	time.sleep(10)
+
+	table = driver.find_element_by_class_name('players-table')
+	rows = table.find_elements_by_tag_name('tr')
+
+	# The real Sebastian Aho can be found in column 6, row 3!!!!!!!
+	columns = rows[3].find_elements_by_tag_name('td')
+	df.Rank[df.Player == 'Sebastian Aho'] = columns[6].text
+
 # Store info in .csv file using Pandas
 def store_info(players, draft_order, ranks):
 	fantasy_data = list(zip(players, draft_order, ranks))
@@ -118,7 +134,7 @@ def plot_draft_results(df):
 		ax.scatter(personal_draft, personal_ranks, label=person)
 
 	a, b = stats.get_line_of_best_fit_params(df.index.values, df.Rank)
-
+	
 	df['Expected'] = [a + b*x for x in df.index.values]
 
 	residuals = calculate_residuals(df, df['Expected'])
