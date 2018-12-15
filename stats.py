@@ -1,5 +1,3 @@
-import numpy as np
-
 # Return the parameters for a line of best fit
 def get_line_of_best_fit_params(x, y):
 	xbar = sum(x)/len(x)
@@ -22,11 +20,11 @@ def calculate_sse(n_list, nhat_list):
 	return sum([(n-nhat)**2 for n, nhat in zip(n_list, nhat_list)])
 
 def calculate_coeff_determination(x, y, yhat):
-	ybar = np.mean(y)
+	ybar = sum(y) / len(y) # Mean of y
 
 	ssr = calculate_ssr(y, ybar)
 	sse = calculate_sse(y, yhat)
 
 	ssto = ssr + sse
 
-	return ssr / ssto
+	return float(ssr) / float(ssto)
