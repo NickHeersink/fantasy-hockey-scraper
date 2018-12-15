@@ -1,6 +1,5 @@
 import time
 
-import pickle
 import pandas
 import matplotlib.pyplot as plt
 
@@ -24,34 +23,28 @@ def login(driver):
 	driver.find_element_by_id('login-signin').click()
 
 # Get draft results
-def get_draft_results(driver):
+def get_draft_results(driver, df):
 	players_web_elems = driver.find_elements_by_class_name('name')
-	players = [player.text for player in players_web_elems]
-
-	return players
+	df['Player'] = [player.text for player in players_web_elems]
 
 # Gets draft order (can be done offline knowing the order repeats)
-def get_draft_order():
+def get_draft_order(df):
 	draft_order = settings.DRAFT_ORDER
-	draft_order = draft_order + draft_order.reverse()
+	draft_order = draft_order + list(reversed(draft_order))
 
-	draft_order *= 13 # order repeats 13 times
-
-	return draft_order
+	df['Drafter'] = draft_order * 13
 
 # Get the player rankings from the player page
-def get_player_ranks(driver, players):
+def get_player_information(driver, df):
 	driver.get(settings.YAHOO_RANK_URL)
 
 	search_box = driver.find_element_by_id('playersearchtext')
 
-	ranks = []
-
-	for index, player in enumerate(players):
-		print player
+	for index, player in df.iterrows():
+		print player.Player
 
 		search_box.clear()
-		search_box.send_keys(player)
+		search_box.send_keys(player.Player)
 		search_box.send_keys(u'\ue007') # Press enter - TODO replace with clicking 'Search' button
 
 		time.sleep(10)
@@ -61,13 +54,16 @@ def get_player_ranks(driver, players):
 
 		# The current ranking can be found in column 2, row 6.
 		columns = rows[2].find_elements_by_tag_name('td')
-		ranks.append(columns[6].text)
+		df.loc[index, 'Rank'] = columns[6].text
 
-		print('Ranking is: ' + ranks[index])
+		# TODO - add team (column 3)
+		# TODO - add position (column 1 - split after hyphen)
 
-	return [int(rank) for rank in ranks] # Returns a list of integers instead of strings
+		print('Ranking is: ' + df.loc[index, 'Rank'])
 
-def get_the_real_aho(driver):
+def get_the_real_aho(driver, df):
+	driver.get(settings.YAHOO_RANK_URL)
+
 	search_box = driver.find_element_by_id('playersearchtext')
 
 	search_box.clear()
@@ -81,16 +77,11 @@ def get_the_real_aho(driver):
 
 	# The real Sebastian Aho can be found in column 6, row 3!!!!!!!
 	columns = rows[3].find_elements_by_tag_name('td')
-	df.Rank[df.Player == 'Sebastian Aho'] = columns[6].text
+	df.loc[df.index.values[df.Player == 'Sebastian Aho'], 'Rank'] = columns[6].text
 
 # Store info in .csv file using Pandas
-def store_info(players, draft_order, ranks):
-	fantasy_data = list(zip(players, draft_order, ranks))
-
-	df = pandas.DataFrame(data=fantasy_data, columns=['Player', 'Drafter', 'Rank'])
+def store_info(df):
 	df.to_csv(settings.CSV_FILE_NAME)
-
-	return df
 
 def get_info():
 	return pandas.read_csv(settings.CSV_FILE_NAME, index_col=0)
@@ -134,7 +125,7 @@ def plot_draft_results(df):
 		ax.scatter(personal_draft, personal_ranks, label=person)
 
 	a, b = stats.get_line_of_best_fit_params(df.index.values, df.Rank)
-	
+
 	df['Expected'] = [a + b*x for x in df.index.values]
 
 	residuals = calculate_residuals(df, df['Expected'])
@@ -164,11 +155,14 @@ def main():
 		driver.set_page_load_timeout(60)
 		login(driver)
 
-		players = get_draft_results(driver)
-		draft_order = get_draft_order()
-		ranks = get_player_ranks(driver, players)
+		df = pandas.DataFrame()
 
-		df = store_info(players, draft_order, ranks)
+		get_draft_results(driver, df)
+		get_draft_order(df)
+		get_player_information(driver, df)
+		get_the_real_aho(driver, df)
+
+		store_info(df)
 
 		end_connection(driver)
 	else:
