@@ -47,7 +47,7 @@ def get_player_information(driver, df):
 		search_box.send_keys(player.Player)
 		search_box.send_keys(u'\ue007') # Press enter - TODO replace with clicking 'Search' button
 
-		time.sleep(10)
+		time.sleep(1)
 
 		table = driver.find_element_by_class_name('players-table')
 		rows = table.find_elements_by_tag_name('tr')
@@ -70,7 +70,7 @@ def get_the_real_aho(driver, df):
 	search_box.send_keys('Sebastian Aho')
 	search_box.send_keys(u'\ue007') # Press enter - TODO replace with clicking 'Search' button
 
-	time.sleep(10)
+	time.sleep(1)
 
 	table = driver.find_element_by_class_name('players-table')
 	rows = table.find_elements_by_tag_name('tr')
@@ -96,8 +96,8 @@ def get_draft_spots_by_person(df, person):
 	return df.index.values[df.Drafter == person]
 
 # Get the residuals and add a column to the Pandas dataframe
-def calculate_residuals(df, expected_ranks):
-	residuals = [expected_rank - actual_rank for expected_rank, actual_rank in zip(expected_ranks, df.Rank)]
+def calculate_residuals(df):
+	residuals = [expected_rank - actual_rank for expected_rank, actual_rank in zip(df.Expected, df.Rank)]
 
 	# 'Normalize' ranks so that the further ones are less costly
 	df['Residual'] = [residual for index, residual in enumerate(residuals)]
@@ -117,18 +117,18 @@ def plot_draft_results(df):
 	fig = plt.figure()
 	ax = fig.add_subplot(111)
 
+	a, b = stats.get_line_of_best_fit_params(df.index.values, df.Rank)
+
+	df['Expected'] = [a + b*x for x in df.index.values]
+
+	residuals = calculate_residuals(df)
+
 	for person in settings.DRAFT_ORDER:
 		personal_players = get_player_lists_by_person(df, person)
 		personal_ranks = get_player_ranks_by_person(df, person)
 		personal_draft = get_draft_spots_by_person(df, person)
 
 		ax.scatter(personal_draft, personal_ranks, label=person)
-
-	a, b = stats.get_line_of_best_fit_params(df.index.values, df.Rank)
-
-	df['Expected'] = [a + b*x for x in df.index.values]
-
-	residuals = calculate_residuals(df, df['Expected'])
 
 	r_squared = stats.calculate_coeff_determination(df.index.values, df.Rank, df.Expected)
 
