@@ -96,11 +96,21 @@ def get_draft_spots_by_person(df, person):
 	return df.index.values[df.Drafter == person]
 
 # Get the residuals and add a column to the Pandas dataframe
-def calculate_residuals(df):
-	residuals = [expected_rank - actual_rank for expected_rank, actual_rank in zip(df.Expected, df.Rank)]
+def calculate_residuals(df, b, m):
+	min_factor = b
+	max_factor = m * len(df) + b
 
-	# 'Normalize' ranks so that the further ones are less costly
-	df['Residual'] = [residual for index, residual in enumerate(residuals)]
+	residuals = []
+
+	for index, player in df.iterrows():
+		residual = player.Expected - player.Rank
+
+		scale_factor = min_factor / float(max_factor)
+		scale_factor = 1 - index / float(len(df)) * scale_factor
+
+		residuals.append(residual * scale_factor)
+
+	df['Residual'] = residuals
 
 def add_large_residuals(df, ax):
 	worst_players = df.nsmallest(3, 'Residual')
@@ -117,18 +127,21 @@ def plot_draft_results(df):
 	fig = plt.figure()
 	ax = fig.add_subplot(111)
 
-	a, b = stats.get_line_of_best_fit_params(df.index.values, df.Rank)
+	b, m = stats.get_line_of_best_fit_params(df.index.values, df.Rank)
 
-	df['Expected'] = [a + b*x for x in df.index.values]
+	# Add the expected ranking to the dataframe
+	df['Expected'] = [m*x + b for x in df.index.values]
 
-	residuals = calculate_residuals(df)
+	calculate_residuals(df, b, m)
 
 	for person in settings.DRAFT_ORDER:
 		personal_players = get_player_lists_by_person(df, person)
 		personal_ranks = get_player_ranks_by_person(df, person)
 		personal_draft = get_draft_spots_by_person(df, person)
 
-		ax.scatter(personal_draft, personal_ranks, label=person)
+		average_residual = sum([residual for residual in df.Residual[df.Drafter == person]]) / len(df[df.Drafter == person])
+
+		ax.scatter(personal_draft, personal_ranks, label=person + " " + str(average_residual))
 
 	r_squared = stats.calculate_coeff_determination(df.index.values, df.Rank, df.Expected)
 
