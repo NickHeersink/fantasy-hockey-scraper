@@ -1,4 +1,5 @@
 import time
+import pdb
 
 import pandas
 import matplotlib.pyplot as plt
@@ -126,8 +127,33 @@ def add_large_residuals(df, ax):
 	for player in worst_players.itertuples():
 		ax.annotate(player.Player, xy=(player.Index, player.Rank), textcoords = 'data')
 
+def filter_df(df, search_drafters, search_teams, search_positions):
+	df1 = pandas.DataFrame(columns=['Player','Rank','Residual','Team','Position'])
+	df2 = pandas.DataFrame(columns=['Player','Rank','Residual','Team','Position'])
+	df3 = pandas.DataFrame(columns=['Player','Rank','Residual','Team','Position'])
+
+	if search_drafters:
+		for drafter in search_drafters:
+			df1 = df1.append(df[df.Drafter==drafter])
+	else:
+		df1 = df
+
+	if search_teams:
+		for team in search_teams:
+			df2 = df2.append(df1[df1.Team==team])
+	else:
+		df2 = df1
+
+	if search_positions:
+		for position in search_positions:
+			df3 = df3.append(df2[df2.Position==position])
+	else:
+		df3 = df2
+
+	return df3		
+
 # Plot the results
-def plot_draft_results(df):
+def plot_draft_results(df, search_drafters=[], search_teams=[], search_positions=[]):
 	fig = plt.figure()
 	ax = fig.add_subplot(111)
 
@@ -135,28 +161,30 @@ def plot_draft_results(df):
 
 	# Add the expected ranking to the dataframe
 	df['Expected'] = [m*x + b for x in df.index.values]
-
+	
 	calculate_residuals(df, b, m)
 
+	# Filter the data frame down to the search criteria
+	filtered_df = filter_df(df, search_drafters, search_teams, search_positions)
+
 	for person in settings.DRAFT_ORDER:
-		personal_players = get_player_lists_by_person(df, person)
-		personal_ranks = get_player_ranks_by_person(df, person)
-		personal_draft = get_draft_spots_by_person(df, person)
+		personal_players = get_player_lists_by_person(filtered_df, person)
+		personal_ranks = get_player_ranks_by_person(filtered_df, person)
+		personal_draft = get_draft_spots_by_person(filtered_df, person)
 
-		average_residual = sum([residual for residual in df.Residual[df.Drafter == person]]) / len(df[df.Drafter == person])
-
-		ax.scatter(personal_draft, personal_ranks, label=person + " " + str(round(average_residual, 2)))
+		if not filtered_df[filtered_df.Drafter == person].empty:
+			average_residual = sum([residual for residual in filtered_df.Residual[filtered_df.Drafter == person]]) / len(filtered_df[filtered_df.Drafter == person])
+			ax.scatter(personal_draft, personal_ranks, label=person + " " + str(round(average_residual, 2)))
 
 	r_squared = stats.calculate_coeff_determination(df.index.values, df.Rank, df.Expected)
 
-	plt.plot(df.index.values, df.Expected)
+	plt.plot(filtered_df.index.values, filtered_df.Expected)
 
 	plt.legend(loc='upper left')
-	plt.xlabel('Draft Position')
-	plt.ylabel('Ranking')
-	plt.title('R-squared value: ' + str(r_squared))
+	plt.xlabel('Drafted Position')
+	plt.ylabel('Actual Ranking')
 
-	add_large_residuals(df, ax)
+	add_large_residuals(filtered_df, ax)
 
 	plt.show()
 
@@ -185,7 +213,7 @@ def main():
 	else:
 		df = get_info()
 
-	#plot_draft_results(df)
+	plot_draft_results(df, search_drafters=[], search_teams=[], search_positions=['G'])
 
 
 if __name__ == "__main__":
