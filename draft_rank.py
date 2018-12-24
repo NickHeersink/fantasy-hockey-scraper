@@ -47,20 +47,20 @@ def get_player_information(driver, df):
 		search_box.send_keys(player.Player)
 		search_box.send_keys(u'\ue007') # Press enter - TODO replace with clicking 'Search' button
 
-		time.sleep(1)
+		time.sleep(10)
 
 		table = driver.find_element_by_class_name('players-table')
 		rows = table.find_elements_by_tag_name('tr')
 
-		# The current ranking can be found in column 2, row 6.
 		columns = rows[2].find_elements_by_tag_name('td')
-		df.loc[index, 'Rank'] = columns[6].text
 
-		# TODO - add team (column 3)
-		# TODO - add position (column 1 - split after hyphen)
+		df.loc[index, 'Rank'] = columns[6].text
+		df.loc[index, 'Team'] = columns[1].text.split(' ')[-3]
+		df.loc[index, 'Position'] = columns[1].text.split(' ')[-1]
 
 		print('Ranking is: ' + df.loc[index, 'Rank'])
 
+# Returns the real Sebastian Aho information
 def get_the_real_aho(driver, df):
 	driver.get(settings.YAHOO_RANK_URL)
 
@@ -78,11 +78,14 @@ def get_the_real_aho(driver, df):
 	# The real Sebastian Aho can be found in column 6, row 3!!!!!!!
 	columns = rows[3].find_elements_by_tag_name('td')
 	df.loc[df.index.values[df.Player == 'Sebastian Aho'], 'Rank'] = columns[6].text
+	df.loc[df.index.values[df.Player == 'Sebastian Aho'], 'Team'] = columns[1].text.split(' ')[-3]
+	df.loc[df.index.values[df.Player == 'Sebastian Aho'], 'Position'] = columns[1].text.split(' ')[-1]
 
 # Store info in .csv file using Pandas
 def store_info(df):
 	df.to_csv(settings.CSV_FILE_NAME)
 
+# Writes the info in the .csv file to a Pandas dataframe
 def get_info():
 	return pandas.read_csv(settings.CSV_FILE_NAME, index_col=0)
 
@@ -102,19 +105,20 @@ def calculate_residuals(df, b, m):
 
 	residuals = []
 
+	# Scale the residuals so that the earlier picks are weighted more heavily than the later ones
 	for index, player in df.iterrows():
 		residual = player.Expected - player.Rank
 
 		scale_factor = min_factor / float(max_factor)
 		scale_factor = 1 - index / float(len(df)) * scale_factor
 
-		residuals.append(residual * scale_factor)
+		residuals.append(round(residual * scale_factor, 2))
 
 	df['Residual'] = residuals
 
 def add_large_residuals(df, ax):
-	worst_players = df.nsmallest(3, 'Residual')
-	best_players = df.nlargest(3, 'Residual')
+	worst_players = df.nsmallest(5, 'Residual')
+	best_players = df.nlargest(5, 'Residual')
 
 	for player in best_players.itertuples():
 		ax.annotate(player.Player, xy=(player.Index, player.Rank), textcoords = 'data')
@@ -141,7 +145,7 @@ def plot_draft_results(df):
 
 		average_residual = sum([residual for residual in df.Residual[df.Drafter == person]]) / len(df[df.Drafter == person])
 
-		ax.scatter(personal_draft, personal_ranks, label=person + " " + str(average_residual))
+		ax.scatter(personal_draft, personal_ranks, label=person + " " + str(round(average_residual, 2)))
 
 	r_squared = stats.calculate_coeff_determination(df.index.values, df.Rank, df.Expected)
 
@@ -181,7 +185,7 @@ def main():
 	else:
 		df = get_info()
 
-	plot_draft_results(df)
+	#plot_draft_results(df)
 
 
 if __name__ == "__main__":
