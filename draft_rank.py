@@ -130,7 +130,7 @@ def filter_df(df, search_drafters, search_teams, search_positions):
 
 	if search_drafters:
 		for person in search_drafters:
-			filtered_df = df[df.Drafter == person]
+			filtered_df = filtered_df.append(df[df.Drafter == person])
 
 	return filtered_df
 
@@ -154,6 +154,7 @@ def plot_draft_results(df, search_drafters=[], search_teams=[], search_positions
 		personal_ranks = get_player_ranks_by_person(filtered_df, person)
 		personal_draft = get_draft_spots_by_person(filtered_df, person)
 
+		# Only add points if there are players for that drafter
 		if not filtered_df[filtered_df.Drafter == person].empty:
 			average_residual = sum([residual for residual in filtered_df.Residual[filtered_df.Drafter == person]]) / len(filtered_df[filtered_df.Drafter == person])
 			ax.scatter(personal_draft, personal_ranks, label=person + " " + str(round(average_residual, 2)))
@@ -195,7 +196,7 @@ def main():
 	else:
 		df = get_info()
 
-	plot_draft_results(df, search_drafters=['nick'], search_teams=[], search_positions=[])
+	plot_draft_results(df, search_drafters=['nick', 'nico'], search_teams=[], search_positions=[])
 
 
 if __name__ == "__main__":
