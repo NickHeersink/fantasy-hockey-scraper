@@ -28,3 +28,6 @@ def calculate_coeff_determination(x, y, yhat):
 	ssto = ssr + sse
 
 	return float(ssr) / float(ssto)
+
+def nicos_func()
+	return 3+4
