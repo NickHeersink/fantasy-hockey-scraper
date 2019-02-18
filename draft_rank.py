@@ -15,13 +15,13 @@ def login(driver):
 
 	username = driver.find_element_by_name('username')
 	username.send_keys(settings.YAHOO_USERNAME)
-	driver.find_element_by_id('login-signin').click()
+	username.send_keys(u'\ue007')
 
 	time.sleep(10)
 
 	password = driver.find_element_by_name('password')
 	password.send_keys(settings.YAHOO_PASSWORD)
-	driver.find_element_by_id('login-signin').click()
+	password.send_keys(u'\ue007')
 
 # Get draft results
 def get_draft_results(driver, df):
@@ -48,7 +48,7 @@ def get_player_information(driver, df):
 		search_box.send_keys(player.Player)
 		search_box.send_keys(u'\ue007') # Press enter - TODO replace with clicking 'Search' button
 
-		time.sleep(10)
+		time.sleep(5)
 
 		table = driver.find_element_by_class_name('players-table')
 		rows = table.find_elements_by_tag_name('tr')
@@ -56,22 +56,20 @@ def get_player_information(driver, df):
 		columns = rows[2].find_elements_by_tag_name('td')
 
 		df.loc[index, 'Rank'] = columns[6].text
-		df.loc[index, 'Team'] = columns[1].text.split(' ')[-3]
-		df.loc[index, 'Position'] = columns[1].text.split(' ')[-1]
+		#df.loc[index, 'Team'] = columns[1].text.split(' ')[-3]
+		#df.loc[index, 'Position'] = columns[1].text.split(' ')[-1]
 
 		print('Ranking is: ' + df.loc[index, 'Rank'])
 
 # Returns the real Sebastian Aho information
 def get_the_real_aho(driver, df):
-	driver.get(settings.YAHOO_RANK_URL)
-
 	search_box = driver.find_element_by_id('playersearchtext')
 
 	search_box.clear()
 	search_box.send_keys('Sebastian Aho')
 	search_box.send_keys(u'\ue007') # Press enter - TODO replace with clicking 'Search' button
 
-	time.sleep(1)
+	time.sleep(5)
 
 	table = driver.find_element_by_class_name('players-table')
 	rows = table.find_elements_by_tag_name('tr')
@@ -79,8 +77,8 @@ def get_the_real_aho(driver, df):
 	# The real Sebastian Aho can be found in column 6, row 3!!!!!!!
 	columns = rows[3].find_elements_by_tag_name('td')
 	df.loc[df.index.values[df.Player == 'Sebastian Aho'], 'Rank'] = columns[6].text
-	df.loc[df.index.values[df.Player == 'Sebastian Aho'], 'Team'] = columns[1].text.split(' ')[-3]
-	df.loc[df.index.values[df.Player == 'Sebastian Aho'], 'Position'] = columns[1].text.split(' ')[-1]
+	#df.loc[df.index.values[df.Player == 'Sebastian Aho'], 'Team'] = columns[1].text.split(' ')[-3]
+	#df.loc[df.index.values[df.Player == 'Sebastian Aho'], 'Position'] = columns[1].text.split(' ')[-1]
 
 # Store info in .csv file using Pandas
 def store_info(df):
@@ -128,29 +126,13 @@ def add_large_residuals(df, ax):
 		ax.annotate(player.Player, xy=(player.Index, player.Rank), textcoords = 'data')
 
 def filter_df(df, search_drafters, search_teams, search_positions):
-	df1 = pandas.DataFrame(columns=['Player','Rank','Residual','Team','Position'])
-	df2 = pandas.DataFrame(columns=['Player','Rank','Residual','Team','Position'])
-	df3 = pandas.DataFrame(columns=['Player','Rank','Residual','Team','Position'])
+	filtered_df = pandas.DataFrame(columns=['Player','Rank','Residual','Team','Position'])
 
 	if search_drafters:
-		for drafter in search_drafters:
-			df1 = df1.append(df[df.Drafter==drafter])
-	else:
-		df1 = df
+		for person in search_drafters:
+			filtered_df = df[df.Drafter == person]
 
-	if search_teams:
-		for team in search_teams:
-			df2 = df2.append(df1[df1.Team==team])
-	else:
-		df2 = df1
-
-	if search_positions:
-		for position in search_positions:
-			df3 = df3.append(df2[df2.Position==position])
-	else:
-		df3 = df2
-
-	return df3		
+	return filtered_df
 
 # Plot the results
 def plot_draft_results(df, search_drafters=[], search_teams=[], search_positions=[]):
@@ -213,7 +195,7 @@ def main():
 	else:
 		df = get_info()
 
-	plot_draft_results(df, search_drafters=[], search_teams=[], search_positions=['G'])
+	plot_draft_results(df, search_drafters=['nick'], search_teams=[], search_positions=[])
 
 
 if __name__ == "__main__":
