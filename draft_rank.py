@@ -115,9 +115,10 @@ def calculate_residuals(df, b, m):
 
 	df['Residual'] = residuals
 
+# Adds data labels for the n-best and n-worst players per drafter
 def add_large_residuals(df, ax):
-	worst_players = df.nsmallest(5, 'Residual')
-	best_players = df.nlargest(5, 'Residual')
+	worst_players = df.nsmallest(settings.NUM_RESIDUALS, 'Residual')
+	best_players = df.nlargest(settings.NUM_RESIDUALS, 'Residual')
 
 	for player in best_players.itertuples():
 		ax.annotate(player.Player, xy=(player.Index, player.Rank), textcoords = 'data')
@@ -125,12 +126,18 @@ def add_large_residuals(df, ax):
 	for player in worst_players.itertuples():
 		ax.annotate(player.Player, xy=(player.Index, player.Rank), textcoords = 'data')
 
+# Filter the dataframe based on the drafter, teams, and/or position
+# If these lists are empty, it will return all
 def filter_df(df, search_drafters, search_teams, search_positions):
 	filtered_df = pandas.DataFrame(columns=['Player','Rank','Residual','Team','Position'])
 
 	if search_drafters:
 		for person in search_drafters:
 			filtered_df = filtered_df.append(df[df.Drafter == person])
+	else:
+		filtered_df = df
+
+	# TODO - filter for teams and positions
 
 	return filtered_df
 
@@ -196,7 +203,7 @@ def main():
 	else:
 		df = get_info()
 
-	plot_draft_results(df, search_drafters=['nick', 'nico'], search_teams=[], search_positions=[])
+	plot_draft_results(df, search_drafters=['tim', 'nick'], search_teams=[], search_positions=[])
 
 
 if __name__ == "__main__":
