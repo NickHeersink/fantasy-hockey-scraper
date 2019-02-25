@@ -1,6 +1,9 @@
 import time
 import pdb
 
+import requests
+from bs4 import BeautifulSoup
+
 import pandas
 import matplotlib.pyplot as plt
 
@@ -10,8 +13,9 @@ import settings
 import stats
 
 # Connect to Yahoo Fantasy
-def login(driver):
-	driver.get(settings.YAHOO_DRAFT_URL)
+# Pass in the URL you'd like to go to immediately upon logging in
+def login(driver, url):
+	driver.get(url)
 
 	username = driver.find_element_by_name('username')
 	username.send_keys(settings.YAHOO_USERNAME)
@@ -182,13 +186,14 @@ def plot_draft_results(df, search_drafters=[], search_teams=[], search_positions
 def end_connection(driver):
 	driver.close()
 
-def main():
+# Call this function from main to produce a comparison for how everyone has drafted
+def compare_drafter_rankings():
 	print('Welcome to the Non-Competitive Action League')
 
 	if settings.NEED_NEW_DATA:
 		driver = webdriver.Chrome()
 		driver.set_page_load_timeout(60)
-		login(driver)
+		login(driver, settings.YAHOO_DRAFT_URL)
 
 		df = pandas.DataFrame()
 
@@ -205,6 +210,32 @@ def main():
 
 	plot_draft_results(df, search_drafters=['tim', 'nick'], search_teams=[], search_positions=[])
 
+# Loop through each week and grab the matchup results
+def get_weekly_matchup(driver, df):
+	for i in range(1,20):
+		driver.get('https://hockey.fantasysports.yahoo.com/hockey/31211/matchup?week=' + i + '&module=matchup&mid1=1')
+		time.sleep(3)
+
+		html = driver.page_source
+		# Fresh bowl of soup
+		soup = BeautifulSoup(html)
+
+		# TODO - parse the bowl of soup
+
+# Call this function from main to save a history of all matchups
+def get_all_matchups():
+	print('Getting the history of matchups')
+
+	driver = webdriver.Chrome()
+	driver.set_page_load_timeout(60)
+	login(driver, settings.YAHOO_MATCHUP_URL)
+
+	df = pandas.DataFrame()
+
+	get_weekly_matchup(driver, df)
+
+def main():
+	get_all_matchups()
 
 if __name__ == "__main__":
 	main()
