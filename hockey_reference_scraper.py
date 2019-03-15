@@ -1,4 +1,5 @@
 import yahoo_scraper
+import pandas
 import requests
 import pdb
 
@@ -10,6 +11,7 @@ category_dict = {
 	"team_id": "Team",
 	"pos": "Position",
 	"games_played": "Games Played",
+	"games_goalie": "Games Played",
 	"goals": "Goals",
 	"assists": "Assists",
 	"points": "Points",
@@ -55,11 +57,17 @@ def parse_individual_stats(df, row):
 					
 	# Check if the player is in the list of drafted players
 	if df['Player'].str.contains(name).any():
-
 		# Loop through each column and check if it's in the dictionary of stuff we should record
 		for cell in cells:
 			if cell['data-stat'] in category_dict.keys():
 				df.loc[df.index.values[df.Player == name], category_dict[cell['data-stat']]] = cell.find(text=True)
+
+
+# Add goalie positions to CSV. Assumes missing positions should all be goalies
+def add_goalie_positions(df):
+	for index, player in df.iterrows():
+		if pandas.isnull(player.Position):
+			df.at[index, 'Position'] = 'G'
 
 
 # Gets the individual player stats from Hockey Reference
@@ -84,6 +92,8 @@ def main():
 	
 	get_player_stats(df, 'skaters')
 	get_player_stats(df, 'goalies')
+
+	add_goalie_positions(df)
 
 	yahoo_scraper.store_info(df)
 
