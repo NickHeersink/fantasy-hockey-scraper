@@ -1,5 +1,7 @@
-import draft_rank
+import yahoo_scraper
 import requests
+import pdb
+
 from bs4 import BeautifulSoup
 
 # The keys are the HTML table elements BeautifulSoup records
@@ -15,10 +17,29 @@ category_dict = {
 	"blocks": "Blocks",
 	"hits": "Hits",
 	"wins_goalie": "Wins",
+	"goals_sh": "Shorthanded Goals",
+	"assists_sh": "Shorthanded Assists",
 	"save_pct": "Save Percentage",
 	"goals_against_avg": "Goals Against Average",
 	"shutouts": "Shutouts"
 }
+
+
+# Search through the list of mismatched names and return the way it is stored in Yahoo
+def check_fake_bois(name):
+	if name == "Mitch Marner":
+		name = "Mitchell Marner"
+	elif name == "Alex Steen":
+		name = "Alexander Steen"
+	elif name == "Jake Debrusk":
+		name = "Jake DeBrusk"
+	elif name == "Jon Marchessault":
+		name = "Jonathan Marchessault"
+	elif name == "Mathew Dumba":
+		name = "Matt Dumba"
+
+	return name
+
 
 # Goes through an individual player stats and adds their stats to the CSV if they are in the original list
 def parse_individual_stats(df, row):
@@ -28,12 +49,10 @@ def parse_individual_stats(df, row):
 	try:
 		name = cells[0].find(text=True)
 
-		# Get the real Mitch Marner
-		if name == "Mitch Marner":
-			name = "Mitchell Marner"
+		name = check_fake_bois(name)
 	except:
 		return
-
+					
 	# Check if the player is in the list of drafted players
 	if df['Player'].str.contains(name).any():
 
@@ -41,6 +60,7 @@ def parse_individual_stats(df, row):
 		for cell in cells:
 			if cell['data-stat'] in category_dict.keys():
 				df.loc[df.index.values[df.Player == name], category_dict[cell['data-stat']]] = cell.find(text=True)
+
 
 # Gets the individual player stats from Hockey Reference
 def get_player_stats(df, player_type):
@@ -58,13 +78,15 @@ def get_player_stats(df, player_type):
 	for row in rows:
 		parse_individual_stats(df, row)
 
+
 def main():
-	df = draft_rank.get_info()
+	df = yahoo_scraper.get_info()
 	
 	get_player_stats(df, 'skaters')
 	get_player_stats(df, 'goalies')
 
-	draft_rank.store_info(df)
+	yahoo_scraper.store_info(df)
+
 
 if __name__ == "__main__":
 	main()
