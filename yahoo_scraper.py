@@ -213,12 +213,14 @@ def compare_drafter_rankings():
 # Loop through each week and grab the matchup results
 def get_weekly_matchup(driver, df):
 	for i in range(1,20):
-		driver.get('https://hockey.fantasysports.yahoo.com/hockey/31211/matchup?week=' + i + '&module=matchup&mid1=1')
+		driver.get('https://hockey.fantasysports.yahoo.com/hockey/31211/matchup?week=' + str(i) + '&module=matchup&mid1=1')
 		time.sleep(3)
 
 		html = driver.page_source
 		# Fresh bowl of soup
 		soup = BeautifulSoup(html)
+
+		pdb.set_trace()
 
 		# TODO - parse the bowl of soup
 
