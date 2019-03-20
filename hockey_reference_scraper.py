@@ -1,5 +1,6 @@
 import yahoo_scraper
 import pandas
+import numpy
 import requests
 import pdb
 
@@ -63,11 +64,16 @@ def parse_individual_stats(df, row):
 				df.loc[df.index.values[df.Player == name], category_dict[cell['data-stat']]] = cell.find(text=True)
 
 
-# Add goalie positions to CSV. Assumes missing positions should all be goalies
-def add_goalie_positions(df):
-	for index, player in df.iterrows():
+def fill_in_blank_cells(df):
+	for row_index, player in df.iterrows():
+		# Add goalie positions to CSV
 		if pandas.isnull(player.Position):
-			df.at[index, 'Position'] = 'G'
+			df.at[row_index, 'Position'] = 'G'
+
+		# Add zeroes to any blank cells
+		for col_index, category in enumerate(player):
+			if pandas.isnull(df.iloc[row_index,col_index]):
+				df.iat[row_index, col_index] = 0
 
 
 # Gets the individual player stats from Hockey Reference
@@ -93,7 +99,7 @@ def main():
 	get_player_stats(df, 'skaters')
 	get_player_stats(df, 'goalies')
 
-	add_goalie_positions(df)
+	fill_in_blank_cells(df)
 
 	yahoo_scraper.store_info(df)
 
