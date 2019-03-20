@@ -27,22 +27,21 @@ category_dict = {
 	"shutouts": "Shutouts"
 }
 
+fake_bois = {
+	"Mitch Marner": "Mitchell Marner",
+	"Alex Steen": "Alexander Steen",
+	"Jake Debrusk": "Jake DeBrusk",
+	"Jon Marchessault": "Jonathan Marchessault",
+	"Mathew Dumba": "Matt Dumba"
+}
+
 
 # Search through the list of mismatched names and return the way it is stored in Yahoo
 def check_fake_bois(name):
-	if name == "Mitch Marner":
-		name = "Mitchell Marner"
-	elif name == "Alex Steen":
-		name = "Alexander Steen"
-	elif name == "Jake Debrusk":
-		name = "Jake DeBrusk"
-	elif name == "Jon Marchessault":
-		name = "Jonathan Marchessault"
-	elif name == "Mathew Dumba":
-		name = "Matt Dumba"
+	if name in fake_bois.keys():
+		name = fake_bois[name]
 
 	return name
-
 
 # Goes through an individual player stats and adds their stats to the CSV if they are in the original list
 def parse_individual_stats(df, row):
