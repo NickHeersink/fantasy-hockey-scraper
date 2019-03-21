@@ -75,6 +75,13 @@ def fill_in_blank_cells(df):
 				df.iat[row_index, col_index] = 0
 
 
+def add_shorthanded_points(df):
+	# Convert columns to integers
+	df[["Shorthanded Goals", "Shorthanded Assists"]] = df[["Shorthanded Goals", "Shorthanded Assists"]].apply(pandas.to_numeric)
+
+	df['Shorthanded Points'] = df['Shorthanded Goals'] + df['Shorthanded Assists']
+
+
 # Gets the individual player stats from Hockey Reference
 def get_player_stats(df, player_type):
 	page_link = 'https://www.hockey-reference.com/leagues/NHL_2019_' + player_type + '.html'
@@ -99,6 +106,8 @@ def main():
 	get_player_stats(df, 'goalies')
 
 	fill_in_blank_cells(df)
+
+	add_shorthanded_points(df)
 
 	yahoo_scraper.store_info(df)
 
