@@ -39,7 +39,7 @@ cat_dict = {
 def get_cat_avgs():
 
 	cats=pd.Series(('G','A','P','PIM','PPP','SHP','GWG','HIT','BLK','W','GAA','SVP','SHO'))
-	avgs=pd.Series((20.02083333,35.63194444,55.65277778, 32.54861111,16.56944444,0.583333333,3.159722222,68.375,51.4375,2.930555556,2.755486111,0.909708333,0.319444444))
+	avgs=pd.Series((20.02083333,35.63194444,55.65277778,32.54861111,16.56944444,0.583333333,3.159722222,68.375,51.4375,2.930555556,2.755486111,0.909708333,0.319444444))
 
 	keys=('Category', 'Average')
 	df=pd.concat((cats, avgs), axis=1, keys=keys)
@@ -60,15 +60,18 @@ def get_CPG():
 		for j, col in enumerate(df.columns):
 			if col in cat_dict.keys():
 				if col != "Games Played" and not math.isnan(df.loc[i,col]):
-					if i==0:
-						print 'cuurent: '+df.loc[i,"CPG"]
-						print 'cat val: '+df.loc[i,col]
-						print 'GP: '+df.loc[i,"Games Played"]
-						print 'cat avg:'+vlookup(avg_cats,cat_dict[col],"Category","Average")
-						print 'result: '+df.loc[i, col]/df.loc[i, "Games Played"]/vlookup(avg_cats,cat_dict[col],"Category","Average")
-					df.loc[i,"CPG"] = df.loc[i,"CPG"] + df.loc[i, col]/df.loc[i, "Games Played"]/vlookup(avg_cats,cat_dict[col],"Category","Average")
-					if i==0: 
-						print 'new val:'+df.loc[i,"CPG"]	
+					if i==15:
+						print col
+						print 'cuurent: {}'.format(df.loc[i,"CPG"])
+						print 'cat val: {}'.format(df.loc[i,col])
+						print 'GP: {}'.format(df.loc[i,"Games Played"])
+						print 'cat avg: {}'.format(vlookup(avg_cats,cat_dict[col],"Category","Average"))
+						print 'dCPG: {}'.format(float(df.loc[i, col])/float(df.loc[i, "Games Played"])/vlookup(avg_cats,cat_dict[col],"Category","Average"))
+					dCPG =  float(df.loc[i, col])/float(df.loc[i, "Games Played"])/vlookup(avg_cats,cat_dict[col],"Category","Average")
+					df.loc[i,"CPG"] = df.loc[i,"CPG"] + dCPG
+					#if i==0: 
+						#print 'new val: {}'.format(df.loc[i,"CPG"])
+						#print ""
 	return df
 
 def vlookup(df, key, key_col, ref_col):
@@ -77,8 +80,20 @@ def vlookup(df, key, key_col, ref_col):
 
 def main():
 	df = get_CPG()
-	#print df
+	print df[['Player','Games Played','Goals','Assists','Points','Penalty Minutes', 'Blocks','Hits','CPG']]
+	del_rows = [] # rows to delete
+	for i, row in df.iterrows():
+		# if a player has played less than 20 games add them to list of rows to be dropped
+		if df.loc[i,"Games Played"] < 20:
+			del_rows.append(int(i))
+
+	# delete rows found above
+	df = df.drop(del_rows, axis=0)
+
+	#TODO - find a better way to compare goalies and skaters
+	#print player with max CPG 
 	print df.loc[df['CPG'].idxmax()]
+
 	plt.plot(df["Rank"],df["CPG"],'bo')
 	plt.xlabel("Rank")
 	plt.ylabel("CPG")
