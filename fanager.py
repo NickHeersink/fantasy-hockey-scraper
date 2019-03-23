@@ -56,18 +56,24 @@ def get_CPG():
 		if "C" in df.loc[i,"Position"] or "W" in df.loc[i,"Position"]:
 			cat_dict = skater_cat_dict
 		elif df.loc[i,"Position"] == "G":
+			#TODO - find a better way to do CPG for goalies
 			cat_dict = goalie_cat_dict
 		for j, col in enumerate(df.columns):
 			if col in cat_dict.keys():
 				if col != "Games Played" and not math.isnan(df.loc[i,col]):
-					if i==15:
-						print col
-						print 'cuurent: {}'.format(df.loc[i,"CPG"])
-						print 'cat val: {}'.format(df.loc[i,col])
-						print 'GP: {}'.format(df.loc[i,"Games Played"])
-						print 'cat avg: {}'.format(vlookup(avg_cats,cat_dict[col],"Category","Average"))
-						print 'dCPG: {}'.format(float(df.loc[i, col])/float(df.loc[i, "Games Played"])/vlookup(avg_cats,cat_dict[col],"Category","Average"))
-					dCPG =  float(df.loc[i, col])/float(df.loc[i, "Games Played"])/vlookup(avg_cats,cat_dict[col],"Category","Average")
+					#if i==15:
+						#print col
+						#print 'cuurent: {}'.format(df.loc[i,"CPG"])
+						#print 'cat val: {}'.format(df.loc[i,col])
+						#print 'GP: {}'.format(df.loc[i,"Games Played"])
+						#print 'cat avg: {}'.format(vlookup(avg_cats,cat_dict[col],"Category","Average"))
+						#print 'dCPG: {}'.format(float(df.loc[i, col])/float(df.loc[i, "Games Played"])/vlookup(avg_cats,cat_dict[col],"Category","Average"))
+					if col != "Goals Against Average":
+						dCPG =  float(df.loc[i, col])/float(df.loc[i, "Games Played"])/vlookup(avg_cats,cat_dict[col],"Category","Average")
+						if col == "Wins" or col == "Shutouts":
+							dCPG = dCPG/10
+					else:
+						dCPG = vlookup(avg_cats,cat_dict[col],"Category","Average")/float(df.loc[i, col])/float(df.loc[i, "Games Played"])
 					df.loc[i,"CPG"] = df.loc[i,"CPG"] + dCPG
 					#if i==0: 
 						#print 'new val: {}'.format(df.loc[i,"CPG"])
