@@ -12,6 +12,10 @@ from selenium import webdriver
 import settings
 import stats
 
+
+SLEEP_TIMEOUT = 10
+
+
 # Connect to Yahoo Fantasy
 # Pass in the URL you'd like to go to immediately upon logging in
 def login(driver, url):
@@ -27,10 +31,12 @@ def login(driver, url):
 	password.send_keys(settings.YAHOO_PASSWORD)
 	password.send_keys(u'\ue007')
 
+
 # Get draft results
 def get_draft_results(driver, df):
 	players_web_elems = driver.find_elements_by_class_name('name')
 	df['Player'] = [player.text for player in players_web_elems]
+
 
 # Gets draft order (can be done offline knowing the order repeats)
 def get_draft_order(df):
@@ -38,6 +44,7 @@ def get_draft_order(df):
 	draft_order = draft_order + list(reversed(draft_order))
 
 	df['Drafter'] = draft_order * 13
+
 
 # Get the player rankings from the player page
 def get_player_information(driver, df):
@@ -52,7 +59,7 @@ def get_player_information(driver, df):
 		search_box.send_keys(player.Player)
 		search_box.send_keys(u'\ue007') # Press enter - TODO replace with clicking 'Search' button
 
-		time.sleep(5)
+		time.sleep(SLEEP_TIMEOUT)
 
 		table = driver.find_element_by_class_name('players-table')
 		rows = table.find_elements_by_tag_name('tr')
@@ -65,6 +72,7 @@ def get_player_information(driver, df):
 
 		print('Ranking is: ' + df.loc[index, 'Rank'])
 
+
 # Returns the real Sebastian Aho information
 def get_the_real_aho(driver, df):
 	search_box = driver.find_element_by_id('playersearchtext')
@@ -73,7 +81,7 @@ def get_the_real_aho(driver, df):
 	search_box.send_keys('Sebastian Aho')
 	search_box.send_keys(u'\ue007') # Press enter - TODO replace with clicking 'Search' button
 
-	time.sleep(5)
+	time.sleep(SLEEP_TIMEOUT)
 
 	table = driver.find_element_by_class_name('players-table')
 	rows = table.find_elements_by_tag_name('tr')
@@ -84,22 +92,28 @@ def get_the_real_aho(driver, df):
 	#df.loc[df.index.values[df.Player == 'Sebastian Aho'], 'Team'] = columns[1].text.split(' ')[-3]
 	#df.loc[df.index.values[df.Player == 'Sebastian Aho'], 'Position'] = columns[1].text.split(' ')[-1]
 
+
 # Store info in .csv file using Pandas
 def store_info(df):
 	df.to_csv(settings.CSV_FILE_NAME)
+
 
 # Writes the info in the .csv file to a Pandas dataframe
 def get_info():
 	return pandas.read_csv(settings.CSV_FILE_NAME, index_col=0)
 
+
 def get_player_lists_by_person(df, person):
 	return df.Player[df.Drafter == person]
+
 
 def get_player_ranks_by_person(df, person):
 	return df.Rank[df.Drafter == person]
 
+
 def get_draft_spots_by_person(df, person):
 	return df.index.values[df.Drafter == person]
+
 
 # Get the residuals and add a column to the Pandas dataframe
 def calculate_residuals(df, b, m):
@@ -119,6 +133,7 @@ def calculate_residuals(df, b, m):
 
 	df['Residual'] = residuals
 
+
 # Adds data labels for the n-best and n-worst players per drafter
 def add_large_residuals(df, ax):
 	worst_players = df.nsmallest(settings.NUM_RESIDUALS, 'Residual')
@@ -129,6 +144,7 @@ def add_large_residuals(df, ax):
 
 	for player in worst_players.itertuples():
 		ax.annotate(player.Player, xy=(player.Index, player.Rank), textcoords = 'data')
+
 
 # Filter the dataframe based on the drafter, teams, and/or position
 # If these lists are empty, it will return all
@@ -144,6 +160,7 @@ def filter_df(df, search_drafters, search_teams, search_positions):
 	# TODO - filter for teams and positions
 
 	return filtered_df
+
 
 # Plot the results
 def plot_draft_results(df, search_drafters=[], search_teams=[], search_positions=[]):
@@ -182,9 +199,11 @@ def plot_draft_results(df, search_drafters=[], search_teams=[], search_positions
 
 	plt.show()
 
+
 # Clean up the Chrome webdriver
 def end_connection(driver):
 	driver.close()
+
 
 # Call this function from main to produce a comparison for how everyone has drafted
 def compare_drafter_rankings():
@@ -208,7 +227,8 @@ def compare_drafter_rankings():
 	else:
 		df = get_info()
 
-	plot_draft_results(df, search_drafters=['tim', 'nick'], search_teams=[], search_positions=[])
+	plot_draft_results(df, search_drafters=[], search_teams=[], search_positions=[])
+
 
 # Loop through each week and grab the matchup results
 def get_weekly_matchup(driver, df):
@@ -224,6 +244,7 @@ def get_weekly_matchup(driver, df):
 
 		# TODO - parse the bowl of soup
 
+
 # Call this function from main to save a history of all matchups
 def get_all_matchups():
 	print('Getting the history of matchups')
@@ -236,8 +257,10 @@ def get_all_matchups():
 
 	get_weekly_matchup(driver, df)
 
+
 def main():
-	get_all_matchups()
+	compare_drafter_rankings()
+
 
 if __name__ == "__main__":
 	main()
