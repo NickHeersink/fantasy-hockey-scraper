@@ -20,6 +20,7 @@ category_dict = {
 	"blocks": "Blocks",
 	"hits": "Hits",
 	"wins_goalie": "Wins",
+	"goals_gw": "Game Winning Goals",
 	"goals_sh": "Shorthanded Goals",
 	"assists_sh": "Shorthanded Assists",
 	"save_pct": "Save Percentage",
@@ -43,6 +44,7 @@ def check_fake_bois(name):
 
 	return name
 
+
 # Goes through an individual player stats and adds their stats to the CSV if they are in the original list
 def parse_individual_stats(df, row):
 	cells = row.find_all('td')
@@ -65,7 +67,7 @@ def parse_individual_stats(df, row):
 
 def fill_in_blank_cells(df):
 	for row_index, player in df.iterrows():
-		# Add goalie positions to CSV
+		# Add goalie positions to CSV. Assumes missing positions are for goalies
 		if pandas.isnull(player.Position):
 			df.at[row_index, 'Position'] = 'G'
 
