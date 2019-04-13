@@ -79,8 +79,9 @@ def get_CPG(df):
 
 	return df
 
-def get_roster(team_name):
-	df = pd.read_csv(settings.CSV_FILE_NAME)
+def get_roster(team_name,df=None):
+	if df is None:
+		df = pd.read_csv(settings.CSV_FILE_NAME)
 	
 	del_rows = [] # rows to delete
 	for i, row in df.iterrows():
@@ -108,6 +109,38 @@ def find_trade(team_A,team_B,metric_A,metric_B):
 				trade = [team_A.loc[a,"Player"],team_B.loc[b,"Player"]]
 
 	return trade
+
+def find_trades(df,team_A_name,metric_A,metric_B,team_col=None):
+	if team_col is None:
+		team_col = "Drafter"
+
+	# initiate trades dataframe
+	trades = pd.DataFrame(columns = ['Player A','Team B','Player B'])
+	# get players on Team A
+	team_A = get_roster(team_A_name,df)
+
+	del_rows = [] # rows to delete
+	for i, row in df.iterrows():
+		# remove players on Team A
+		if df.loc[i,team_col] == team_A_name:
+			del_rows.append(int(i))	
+	# delete rows found above
+	df = df.drop(del_rows, axis=0)
+
+	for a, row in team_A.iterrows():
+		for b, row in df.iterrows():
+			value_A = df.loc[b,metric_A]-team_A.loc[a,metric_A]
+			value_B = team_A.loc[a,metric_B]-df.loc[b,metric_B]
+
+			if value_A > 0 and value_B > 0:
+				#trade = pd.DataFrame({"Player A":team_A.loc[a,"Player"], 
+                #        			  "Team B":df.loc[b,team_col],
+                #         			  "Player B":df.loc[b,"Player"]}) 
+				#trades.append(trade)
+				trades.loc[len(trades)] = [team_A.loc[a,"Player"],df.loc[b,team_col],df.loc[b,"Player"]]
+
+	return trades
+			
 
 #================================= Utility Functions =================================
 
@@ -149,9 +182,9 @@ def get_best_CPG():
 	#print df.loc[df['CPG'].idxmax()]
 	print df.sort_values(['CPG'], ascending=False).head(20)[['Player','Games Played','CPG']]
 
-def main():
-	update_player_info()
-	team_A = get_roster('nico')
+def find_good_trade(team_A_name,team_B):
+
+	team_A = get_roster(team_A_name)
 	team_A = get_CPG(team_A)
 	del_rows = [] # rows to delete
 	for i, row in team_A.iterrows():
@@ -162,7 +195,7 @@ def main():
 	# delete rows found above
 	team_A = team_A.drop(del_rows, axis=0)
 
-	team_B = get_roster('nick')
+	team_B = get_roster(team_B_name)
 	team_B = get_CPG(team_B)
 	del_rows = [] # rows to delete
 	for i, row in team_B.iterrows():
@@ -173,9 +206,22 @@ def main():
 	# delete rows found above
 	team_B = team_B.drop(del_rows, axis=0)
 
-	trade = find_trade(team_A,team_B,'CPG','Points')
+	team_A["PPG"] = team_A["Points"]/team_A["Games Played"]
+	team_B["PPG"] = team_B["Points"]/team_B["Games Played"]
+
+	trade = find_trade(team_A,team_B,"CPG","PPG")
+
+	#print stats
 	print team_A.loc[team_A['Player']==trade[0]]
 	print team_B.loc[team_B['Player']==trade[1]]
+
+def main():
+	df = pd.read_csv(settings.CSV_FILE_NAME)
+	df = get_CPG(df)
+	df['PPG'] = df['Points']/df["Games Played"]
+	trades = find_trades(df,'nico','CPG','PPG')
+
+	print trades
 
 if __name__ == "__main__":
 	main()
