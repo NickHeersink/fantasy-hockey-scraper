@@ -94,8 +94,8 @@ def get_the_real_aho(driver, df):
 
 
 # Store info in .csv file using Pandas
-def store_info(df):
-	df.to_csv(settings.CSV_FILE_NAME)
+def store_info(df, file_name):
+	df.to_csv(file_name)
 
 
 # Writes the info in the .csv file to a Pandas dataframe
@@ -221,7 +221,7 @@ def compare_drafter_rankings():
 		get_player_information(driver, df)
 		get_the_real_aho(driver, df)
 
-		store_info(df)
+		store_info(df, SETTINGS.CSV_FILE_NAME)
 
 		end_connection(driver)
 	else:
