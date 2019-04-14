@@ -1,7 +1,9 @@
 import yahoo_scraper
+import settings
+
 import pandas
-import numpy
 import requests
+import unidecode
 import pdb
 
 from bs4 import BeautifulSoup
@@ -46,20 +48,29 @@ def check_fake_bois(name):
 
 
 # Goes through an individual player stats and adds their stats to the CSV if they are in the original list
-def parse_individual_stats(df, row):
+def parse_individual_stats(df, row, pull_all_players):
 	cells = row.find_all('td')
 
 	# Not sure why errors sometimes happen reading rows but we can skip to the next iteration
 	try:
-		name = cells[0].find(text=True)
+		name = unidecode.unidecode(cells[0].find(text=True))
 
 		name = check_fake_bois(name)
 	except:
 		return
 					
 	# Check if the player is in the list of drafted players
-	if df['Player'].str.contains(name).any():
+	if not pull_all_players and df['Player'].str.contains(name).any():
 		# Loop through each column and check if it's in the dictionary of stuff we should record
+		for cell in cells:
+			if cell['data-stat'] in category_dict.keys():
+				df.loc[df.index.values[df.Player == name], category_dict[cell['data-stat']]] = cell.find(text=True)
+
+	elif pull_all_players:
+		# Encode to ASCII to prevent player name errors
+		df.loc[len(df), 'Player'] = name
+		print name
+
 		for cell in cells:
 			if cell['data-stat'] in category_dict.keys():
 				df.loc[df.index.values[df.Player == name], category_dict[cell['data-stat']]] = cell.find(text=True)
@@ -85,8 +96,8 @@ def add_shorthanded_points(df):
 
 
 # Gets the individual player stats from Hockey Reference
-def get_player_stats(df, player_type):
-	page_link = 'https://www.hockey-reference.com/leagues/NHL_2019_' + player_type + '.html'
+def get_player_stats(df, player_type, year, pull_all_players):
+	page_link = 'https://www.hockey-reference.com/leagues/NHL_' + str(year) + '_' + player_type + '.html'
 
 	page_response = requests.get(page_link, timeout=5)
 
@@ -98,20 +109,40 @@ def get_player_stats(df, player_type):
 
 	rows = stats_table_body.find_all('tr')
 	for row in rows:
-		parse_individual_stats(df, row)
+		parse_individual_stats(df, row, pull_all_players)
 
 
-def main():
+def pull_league_data_only():
 	df = yahoo_scraper.get_info()
 	
-	get_player_stats(df, 'skaters')
-	get_player_stats(df, 'goalies')
+	get_player_stats(df, 'skaters', 2019, False)
+	get_player_stats(df, 'goalies', 2019, False)
 
 	fill_in_blank_cells(df)
 
 	add_shorthanded_points(df)
 
-	yahoo_scraper.store_info(df)
+	yahoo_scraper.store_info(df, settings.CSV_FILE_NAME)
+
+
+def pull_all_historical_data(start_year, end_year):
+	for current_year in range(start_year, end_year):
+		print('Pulling data for ' + str(current_year))
+
+		df = pandas.DataFrame()
+
+		get_player_stats(df, 'skaters', current_year, True)
+		get_player_stats(df, 'goalies', current_year, True)
+
+		fill_in_blank_cells(df)
+
+		add_shorthanded_points(df)
+
+		yahoo_scraper.store_info(df, 'all_player_data_' + str(current_year) + '.csv')
+
+
+def main():
+	pull_all_historical_data(2015, 2019)
 
 
 if __name__ == "__main__":
