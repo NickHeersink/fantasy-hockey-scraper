@@ -3,7 +3,7 @@ import settings
 
 import pandas
 import requests
-import unidecode
+#import unidecode
 import pdb
 
 from bs4 import BeautifulSoup
