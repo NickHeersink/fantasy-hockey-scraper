@@ -58,7 +58,7 @@ def parse_individual_stats(df, row, pull_all_players):
 		name = check_fake_bois(name)
 	except:
 		return
-					
+
 	# Check if the player is in the list of drafted players
 	if not pull_all_players and df['Player'].str.contains(name).any():
 		# Loop through each column and check if it's in the dictionary of stuff we should record
@@ -73,7 +73,7 @@ def parse_individual_stats(df, row, pull_all_players):
 
 		for cell in cells:
 			if cell['data-stat'] in category_dict.keys():
-				df.loc[df.index.values[df.Player == name], category_dict[cell['data-stat']]] = cell.find(text=True)
+				df.loc[len(df) - 1, category_dict[cell['data-stat']]] = cell.find(text=True)
 
 
 def fill_in_blank_cells(df):
@@ -107,9 +107,32 @@ def get_player_stats(df, player_type, year, pull_all_players):
 	stats_table = soup.find('table', attrs={'class':'stats_table'})
 	stats_table_body = stats_table.find('tbody')
 
+	# Store the last player added - will not add the subtotals for the same player
+	last_player = ''
+
 	rows = stats_table_body.find_all('tr')
 	for row in rows:
 		parse_individual_stats(df, row, pull_all_players)
+
+
+# Look through the dataframe and removes all non 'TOT' duplicates
+def eliminate_duplicates(df):
+	# Loop through backwards to delete the proper index
+	for i, player in df[::-1].iterrows():
+		if len(df[df.Player == player.Player]) > 1:
+			if player.Team != "TOT":
+				df.drop(df.index[i], inplace=True)
+
+	return df.reset_index(drop=True)
+
+
+# Put in any functions to clean up the dataframe
+def clean_up_dataframe(df):
+	df = eliminate_duplicates(df)
+
+	fill_in_blank_cells(df)
+
+	add_shorthanded_points(df)
 
 
 def pull_league_data_only():
@@ -118,9 +141,7 @@ def pull_league_data_only():
 	get_player_stats(df, 'skaters', 2019, False)
 	get_player_stats(df, 'goalies', 2019, False)
 
-	fill_in_blank_cells(df)
-
-	add_shorthanded_points(df)
+	clean_up_dataframe(df)
 
 	yahoo_scraper.store_info(df, settings.CSV_FILE_NAME)
 
@@ -134,9 +155,7 @@ def pull_all_historical_data(start_year, end_year):
 		get_player_stats(df, 'skaters', current_year, True)
 		get_player_stats(df, 'goalies', current_year, True)
 
-		fill_in_blank_cells(df)
-
-		add_shorthanded_points(df)
+		clean_up_dataframe(df)
 
 		yahoo_scraper.store_info(df, 'all_player_data_' + str(current_year) + '.csv')
 
