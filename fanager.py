@@ -4,7 +4,6 @@ import yahoo_scraper as ys
 import settings
 import math
 import matplotlib.pyplot as plt
-from bs4 import BeautifulSoup
 
 skater_cat_dict = {
 	"Goals": "G",
@@ -38,9 +37,9 @@ cat_dict = {
 }
 
 def get_cat_avgs():
-
 	
 	try:
+		#TODO - change file extension to input
 		df = pd.read_excel(r'C:\Users\nicos\Documents\Projects\HockeyDA\Book1.xlsx','Stat Weighting')
 	except IOError:
 		cats=pd.Series(('G','A','P','PIM','PPP','SHP','GWG','HIT','BLK','W','GAA','SVP','SHO'))
@@ -50,12 +49,13 @@ def get_cat_avgs():
 		df=pd.concat((cats, avgs), axis=1, keys=keys)
 	return df
 
+# returns the average categories per game for every player in a given dataframe
 def get_CPG(df):
 
 	avg_cats = get_cat_avgs() 
 
 	for i, row in df.iterrows():
-		df.loc[i,"CPG"] = 0
+		my_CPG= 0 # value for storing CPG while iterating through different stats
 		if df.loc[i,"Position"] == "G":
 			#TODO - find a better way to do CPG for goalies
 			cat_dict = goalie_cat_dict
@@ -66,22 +66,30 @@ def get_CPG(df):
 				if col != "Games Played" and not math.isnan(df.loc[i,col]):
 					
 					if col == "Save Percentage":
+						# dCPG = (SVP - SVP_avg)/SVP_avg
 						dCPG = (float(df.loc[i, col])-vlookup(avg_cats,cat_dict[col],"Category","Average"))/vlookup(avg_cats,cat_dict[col],"Category","Average")
 					elif col =="Goals Against Average":
+						# dCGP = (GAA_avg - GAA)/GAA_avg
 						dCPG = (vlookup(avg_cats,cat_dict[col],"Category","Average")-float(df.loc[i, col]))/vlookup(avg_cats,cat_dict[col],"Category","Average")/9
 					else:
+						#dCPG = val/val_avg/GP
 						dCPG =  float(df.loc[i, col])/float(df.loc[i, "Games Played"])/vlookup(avg_cats,cat_dict[col],"Category","Average")
 						if col == "Wins" or col == "Shutouts":
+							# scale b/c goalies are hard (9 ia kinda arbitrary)
 							dCPG=dCPG/9
 					
-					df.loc[i,"CPG"] = df.loc[i,"CPG"] + dCPG
+					my_CPG = my_CPG + dCPG
+
+		df.loc[i,"CPG"] = my_CPG
 					
 
 	return df
 
+# returns all the players on a given team
 def get_roster(team_name,df=None):
 	if df is None:
 		df = pd.read_csv(settings.CSV_FILE_NAME)
+		df = df.drop(columns="Unnamed: 0")
 	
 	del_rows = [] # rows to delete
 	for i, row in df.iterrows():
@@ -93,6 +101,7 @@ def get_roster(team_name,df=None):
 
 	return df
 
+# finds a trade which is most beneficial for Team A but should be accepted by Team B
 def find_trade(team_A,team_B,metric_A,metric_B):
 	trade = []
 	trade_value_A = 0
@@ -133,16 +142,59 @@ def find_trades(df,team_A_name,metric_A,metric_B,team_col=None):
 			value_B = team_A.loc[a,metric_B]-df.loc[b,metric_B]
 
 			if value_A > 0 and value_B > 0:
-				#trade = pd.DataFrame({"Player A":team_A.loc[a,"Player"], 
-                #        			  "Team B":df.loc[b,team_col],
-                #         			  "Player B":df.loc[b,"Player"]}) 
-				#trades.append(trade)
 				trades.loc[len(trades)] = [team_A.loc[a,"Player"],df.loc[b,team_col],df.loc[b,"Player"]]
 
 	return trades
 			
 
 #================================= Utility Functions =================================
+
+def drop_rows(df,col,criteria,limit):
+	del_rows = []
+
+	if criteria == "==":
+		for i, row in df.iterrows():
+			# adds rows that fit the criteria to the list of columns to be removed
+			if df.loc[i,col] == limit:
+				del_rows.append(int(i))
+
+	elif criteria == "!=":
+		for i, row in df.iterrows():
+			# adds rows that fit the criteria to the list of columns to be removed
+			if df.loc[i,col] != limit:
+				del_rows.append(int(i))
+
+	elif criteria == ">":
+		for i, row in df.iterrows():
+			# adds rows that fit the criteria to the list of columns to be removed
+			if df.loc[i,col] > limit:
+				del_rows.append(int(i))
+
+	elif criteria == ">=":
+		for i, row in df.iterrows():
+			# adds rows that fit the criteria to the list of columns to be removed
+			if df.loc[i,col] >= limit:
+				del_rows.append(int(i))
+
+	elif criteria == "<":
+		for i, row in df.iterrows():
+			# adds rows that fit the criteria to the list of columns to be removed
+			if df.loc[i,col] < limit:
+				del_rows.append(int(i))
+
+	elif criteria == "<=":
+		for i, row in df.iterrows():
+			# adds rows that fit the criteria to the list of columns to be removed
+			if df.loc[i,col] <= limit:
+				del_rows.append(int(i))
+
+	else:
+		print "Error: Unrecognized operator"
+
+	# delete rows found above
+	df = df.drop(del_rows, axis=0)
+
+	return df
 
 def vlookup(df, key, key_col, ref_col):
 	#grabs the value of the first element in the row
@@ -157,71 +209,17 @@ def plot(x,y,xlabel,ylabel):
 def update_player_info():
 	hrs.main()
 
-#================================= Testing Functions =================================
-
-def get_best_CPG():
-	#get info
-	df = pd.read_csv(settings.CSV_FILE_NAME)
-
-	df = get_CPG(df)
-	#print df[['Player','Games Played','Goals','Assists','Points','Penalty Minutes', 'Blocks','Hits','CPG']]
-	del_rows = [] # rows to delete
-	for i, row in df.iterrows():
-		# if a player has played less than 20 games add them to list of rows to be dropped
-		if df.loc[i,"Games Played"] < 20:
-			del_rows.append(int(i))
-
-	# delete rows found above
-	df = df.drop(del_rows, axis=0)
-
-	#GOALIE STUFF
-	#plot(df["Wins"]/df["Games Played"], df["Save Percentage"], "Win Percentage", "SVP")
-	#print df.sort_values(by=['CPG'])[["Player","Games Played","Wins","Goals Against Average","Save Percentage","Shutouts","CPG"]]
-
-	#print player with max CPG 
-	#print df.loc[df['CPG'].idxmax()]
-	print df.sort_values(['CPG'], ascending=False).head(20)[['Player','Games Played','CPG']]
-
-def find_good_trade(team_A_name,team_B):
-
-	team_A = get_roster(team_A_name)
-	team_A = get_CPG(team_A)
-	del_rows = [] # rows to delete
-	for i, row in team_A.iterrows():
-		# if a player has played less than 20 games add them to list of rows to be dropped
-		if team_A.loc[i,"Position"] == 'G' or team_A.loc[i,"Games Played"] < 20:
-			del_rows.append(int(i))
-
-	# delete rows found above
-	team_A = team_A.drop(del_rows, axis=0)
-
-	team_B = get_roster(team_B_name)
-	team_B = get_CPG(team_B)
-	del_rows = [] # rows to delete
-	for i, row in team_B.iterrows():
-		# if a player has played less than 20 games add them to list of rows to be dropped
-		if team_B.loc[i,"Position"] == 'G' or team_B.loc[i,"Games Played"] < 20:
-			del_rows.append(int(i))
-
-	# delete rows found above
-	team_B = team_B.drop(del_rows, axis=0)
-
-	team_A["PPG"] = team_A["Points"]/team_A["Games Played"]
-	team_B["PPG"] = team_B["Points"]/team_B["Games Played"]
-
-	trade = find_trade(team_A,team_B,"CPG","PPG")
-
-	#print stats
-	print team_A.loc[team_A['Player']==trade[0]]
-	print team_B.loc[team_B['Player']==trade[1]]
+#================================= Main Function ================================================
 
 def main():
+
 	df = pd.read_csv(settings.CSV_FILE_NAME)
 	df = get_CPG(df)
-	df['PPG'] = df['Points']/df["Games Played"]
-	trades = find_trades(df,'nico','CPG','PPG')
+	print get_roster('nico')
+	#df['PPG'] = df['Points']/df["Games Played"]
+	#trades = find_trades(df,'nico','CPG','PPG')
 
-	print trades
+	#print trades
 
 if __name__ == "__main__":
 	main()
