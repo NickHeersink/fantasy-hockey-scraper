@@ -16,16 +16,16 @@ def eval_skaters(df):
 	df = fanager.get_CPG(df) # add CPG to dataframe
 	df = df[df.Position != 'G'] # get rid of goalies
 	df = df.sort_values(['CPG'], ascending=False) # sort by highest CPG
-	df = df[["Player","CPG"]] # get rid of unnecessary columns
-	df = df = df.reset_index(drop=True) # reindex
+	#df = df[["Player","CPG"]] # get rid of unnecessary columns
+	df = df.reset_index(drop=True) # reindex
 	return df
 
 def eval_goalies(df):
 	df = fanager.get_CPG(df) # add CPG to dataframe
 	df = df[df.Position == 'G'] # get rid of non-goalies
 	df = df.sort_values(['CPG'], ascending=False) # soft by highest CPG
-	df = df[["Player","CPG"]] # get rid of unnecessary columns
-	df = df = df.reset_index(drop=True) # reindex
+	#df = df[["Player","CPG"]] # get rid of unnecessary columns
+	df = df.reset_index(drop=True) # reindex
 	return df
 
 def main():

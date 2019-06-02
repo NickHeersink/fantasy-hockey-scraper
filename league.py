@@ -3,6 +3,8 @@ import math
 
 import settings
 import standard_gm
+import human_gm
+import yahoo_gm
 import fanager
 import operations
 
@@ -16,9 +18,9 @@ def main():
 	num_rounds = 5
 
 	# array of team names
-	team_names = ["Team A", "Team B"]
+	team_names = ["Human", "Yahoo", "CPG"]
 	# array of player selection functions
-	team_draft = [standard_gm.make_draft_pick, standard_gm.make_draft_pick]
+	team_draft = [human_gm.make_draft_pick, yahoo_gm.make_draft_pick, standard_gm.make_draft_pick]
 
 	# simulate the draft
 	draft = operations.draft(df,num_rounds,team_names,team_draft)
