@@ -80,7 +80,7 @@ def get_CPG(df):
 					
 					my_CPG = my_CPG + dCPG
 
-		df.loc[i,"CPG"] = my_CPG
+		df.loc[i,"CPG"] = my_CPG # throws warning if only 1 row in dataframe, not sure why
 					
 
 	return df

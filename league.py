@@ -5,6 +5,7 @@ import settings
 import standard_gm
 import human_gm
 import yahoo_gm
+import subtractive_gm
 import fanager
 import operations
 
@@ -14,17 +15,35 @@ def main():
 	#get players
 	df = pd.read_csv(settings.CSV_FILE_NAME)
 
-	# number of rounds
-	num_rounds = 5
+	print_live = 0
 
-	# array of team names
-	team_names = ["Human", "Yahoo", "CPG"]
-	# array of player selection functions
-	team_draft = [human_gm.make_draft_pick, yahoo_gm.make_draft_pick, standard_gm.make_draft_pick]
+	# roster positions [C, LW, RW, D, G, Bonus]
+	pos = [4,4,4,5,3,6]
+
+	# number of rounds (# of players to be drafted)
+	num_rounds = sum(pos)
+
+	# teams
+	teams = [human_gm, yahoo_gm, standard_gm, subtractive_gm]
 
 	# simulate the draft
-	draft = operations.draft(df,num_rounds,team_names,team_draft)
-	print draft
+	draft = operations.draft(teams,df,num_rounds,pos,print_live)
+	if print_live == 0: print draft
+
+	for i in range(len(teams)):
+		
+		score = 0
+		drafted_players = draft[draft.Team == teams[i].get_team_name()].reset_index(drop=True)
+		#drafted_players = drafted_players.reset_index(drop=True)
+
+		for p in range(len(drafted_players)):
+			player_name = drafted_players.loc[p,"Player"]
+			player = df[df.Player == player_name]
+			player = fanager.get_CPG(player).reset_index(drop=True) # get player details from main dataframe
+			score = score + player.loc[0,"CPG"]
+
+
+		print teams[i].get_team_name(), score
 
 if __name__ == "__main__":
 	main()
