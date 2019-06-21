@@ -21,7 +21,7 @@ def draft(teams,player_list,num_rounds,positions,print_live=0):
 		# for t number of teams
 		for t in range(0,len(teams)):
 			# team makes a selection based on currenly available players
-			player = teams[t].make_draft_pick(player_list,draft_list,positions)
+			player = teams[t].make_draft_pick(player_list,draft_list,positions,len(teams))
 			position = player_list.loc[player_list["Player"] == player, 'Position'].values[0]
 
 			# add new player to draft list	

@@ -24,7 +24,7 @@ def main():
 	num_rounds = sum(pos)
 
 	# teams
-	teams = [human_gm, yahoo_gm, standard_gm, subtractive_gm]
+	teams = [human_gm, yahoo_gm, subtractive_gm, standard_gm]
 
 	# simulate the draft
 	draft = operations.draft(teams,df,num_rounds,pos,print_live)

@@ -16,7 +16,7 @@ pos_dict = {
 def get_team_name():
 	return "Yahoo"
 
-def make_draft_pick(players,drafts,pos):
+def make_draft_pick(players,drafts,pos,num_teams):
 	#players - remaining players
 	#picks   - players already picked by this gm
 

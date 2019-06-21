@@ -16,7 +16,7 @@ pos_dict = {
 def get_team_name():
 	return "Greedy AI"
 
-def make_draft_pick(players,drafts,ref_pos):
+def make_draft_pick(players,drafts,ref_pos,num_teams):
 	#players - remaining players
 	#picks   - players already picked in draft
 	#pos 	 - roster positions
