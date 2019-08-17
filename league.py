@@ -2,7 +2,7 @@ import pandas as pd
 import math
 
 import settings
-import standard_gm
+import greedy_gm
 import human_gm
 import yahoo_gm
 import subtractive_gm
@@ -24,11 +24,11 @@ def main():
 	num_rounds = sum(pos)
 
 	# teams
-	teams = [human_gm, yahoo_gm, subtractive_gm, standard_gm]
+	teams = [human_gm, yahoo_gm, subtractive_gm, greedy_gm]
 
 	# simulate the draft
 	draft = operations.draft(teams,df,num_rounds,pos,print_live)
-	if print_live == 0: print draft
+	if print_live == 0: print(draft)
 
 	for i in range(len(teams)):
 		
@@ -43,7 +43,7 @@ def main():
 			score = score + player.loc[0,"CPG"]
 
 
-		print teams[i].get_team_name(), score
+		print(teams[i].get_team_name(), score)
 
 if __name__ == "__main__":
 	main()

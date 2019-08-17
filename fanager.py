@@ -189,7 +189,7 @@ def drop_rows(df,col,criteria,limit):
 				del_rows.append(int(i))
 
 	else:
-		print "Error: Unrecognized operator"
+		print("Error in fanager.drop_rows: Unrecognized operator")
 
 	# delete rows found above
 	df = df.drop(del_rows, axis=0)
@@ -215,7 +215,7 @@ def main():
 
 	df = pd.read_csv(settings.CSV_FILE_NAME)
 	df = get_CPG(df)
-	print get_roster('nico')
+	print(get_roster('nico'))
 	#df['PPG'] = df['Points']/df["Games Played"]
 	#trades = find_trades(df,'nico','CPG','PPG')
 

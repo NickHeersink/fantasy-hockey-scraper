@@ -31,7 +31,7 @@ def draft(teams,player_list,num_rounds,positions,print_live=0):
 			player_list = player_list[player_list.Player != player]
 
 			if print_live == 1:
-				print player, position, team_names[t]
+				print(player, position, team_names[t])
 				#system('cls')
 				#print draft_list
 
@@ -42,7 +42,7 @@ def draft(teams,player_list,num_rounds,positions,print_live=0):
 
 def main():
 
-	print "operations main() is empty"
+	print("operations main() is empty")
 
 if __name__ == "__main__":
 	main()
