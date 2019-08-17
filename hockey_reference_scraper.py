@@ -53,7 +53,7 @@ def parse_individual_stats(df, row, pull_all_players):
 
 	# Not sure why errors sometimes happen reading rows but we can skip to the next iteration
 	try:
-		name = unidecode.unidecode(cells[0].find(text=True))
+		name = cells[0].find(text=True)
 
 		name = check_fake_bois(name)
 	except:
@@ -69,7 +69,7 @@ def parse_individual_stats(df, row, pull_all_players):
 	elif pull_all_players:
 		# Encode to ASCII to prevent player name errors
 		df.loc[len(df), 'Player'] = name
-		print name
+		print(name)
 
 		for cell in cells:
 			if cell['data-stat'] in category_dict.keys():
@@ -87,12 +87,16 @@ def fill_in_blank_cells(df):
 			if pandas.isnull(df.iloc[row_index,col_index]):
 				df.iat[row_index, col_index] = 0
 
+	return df
+
 
 def add_shorthanded_points(df):
 	# Convert columns to integers
 	df[["Shorthanded Goals", "Shorthanded Assists"]] = df[["Shorthanded Goals", "Shorthanded Assists"]].apply(pandas.to_numeric)
 
 	df['Shorthanded Points'] = df['Shorthanded Goals'] + df['Shorthanded Assists']
+
+	return df
 
 
 # Gets the individual player stats from Hockey Reference
@@ -106,9 +110,6 @@ def get_player_stats(df, player_type, year, pull_all_players):
 
 	stats_table = soup.find('table', attrs={'class':'stats_table'})
 	stats_table_body = stats_table.find('tbody')
-
-	# Store the last player added - will not add the subtotals for the same player
-	last_player = ''
 
 	rows = stats_table_body.find_all('tr')
 	for row in rows:
@@ -129,10 +130,10 @@ def eliminate_duplicates(df):
 # Put in any functions to clean up the dataframe
 def clean_up_dataframe(df):
 	df = eliminate_duplicates(df)
+	df = fill_in_blank_cells(df)
+	df = add_shorthanded_points(df)
 
-	fill_in_blank_cells(df)
-
-	add_shorthanded_points(df)
+	return df
 
 
 def pull_league_data_only():
@@ -155,13 +156,13 @@ def pull_all_historical_data(start_year, end_year):
 		get_player_stats(df, 'skaters', current_year, True)
 		get_player_stats(df, 'goalies', current_year, True)
 
-		clean_up_dataframe(df)
+		df = clean_up_dataframe(df)
 
 		yahoo_scraper.store_info(df, 'all_player_data_' + str(current_year) + '.csv')
 
 
 def main():
-	pull_all_historical_data(2015, 2019)
+	pull_all_historical_data(2018, 2019)
 
 
 if __name__ == "__main__":

@@ -53,7 +53,7 @@ def get_player_information(driver, df):
 	search_box = driver.find_element_by_id('playersearchtext')
 
 	for index, player in df.iterrows():
-		print player.Player
+		print(player.Player)
 
 		search_box.clear()
 		search_box.send_keys(player.Player)
