@@ -42,7 +42,7 @@ def update_pos(drafts,pos):
 	return pos
 
 def main():
-	print "Hello"
+	print("Hello")
 
 if __name__ == "__main__":
 	main()
