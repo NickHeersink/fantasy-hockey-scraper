@@ -37,13 +37,12 @@ def make_draft_pick(players,drafts,ref_pos,num_teams):
 	pos = update_pos(drafts,pos) # update positions remaining
 	
 	players = eval_players(players) # add eval column
-	# players with high likelyhood to be drafted in next round, ie. x # of top yahoo ranked players
-	# x = number of teams
+	# players with high likelyhood to be drafted in next round
 	exp_players_drafted = players.sort_values(['Rank'], ascending=True).head(num_teams*2)
 
-	top_players = pd.DataFrame(columns=['Player','Position','CPG','dCPG'])
+	top_players = pd.DataFrame(columns=['Player','Position','CPG','dCPG']) # players that might be drafted next round
 	
-	# for all position
+	# for all positions on team
 	for p in pos_dict:
 		# if have space for a player in that position
 		if pos[pos_dict[p]] > 0: 
