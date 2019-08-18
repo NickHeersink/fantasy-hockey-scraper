@@ -25,7 +25,7 @@ def draft(teams,player_list,num_rounds,positions,print_live=0):
 			position = player_list.loc[player_list["Player"] == player, 'Position'].values[0]
 
 			# add new player to draft list	
-			draft_list = draft_list.append({'Player': player, 'Position': position, 'Team': team_names[t]}, ignore_index=True)
+			draft_list = draft_list.append({'Player': player, 'Position': position, 'Team': team_names[t], 'ID': t}, ignore_index=True)
 			
 			# drop player from remaining players
 			player_list = player_list[player_list.Player != player]

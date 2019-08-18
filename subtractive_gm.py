@@ -40,14 +40,20 @@ def make_draft_pick(players,drafts,ref_pos,num_teams):
 	# players with high likelyhood to be drafted in next round
 	exp_players_drafted = players.sort_values(['Rank'], ascending=True).head(num_teams*2)
 
-	top_players = pd.DataFrame(columns=['Player','Position','CPG','dCPG']) # players that might be drafted next round
+	top_players = pd.DataFrame(columns=['Player','Position','CPG','dCPG']) # players to be considered drafting
 	
 	# for all positions on team
 	for p in pos_dict:
 		# if have space for a player in that position
-		if pos[pos_dict[p]] > 0: 
-			# get all players in that position
-			players_in_pos = players.loc[players.Position == p]
+		if pos[pos_dict[p]] > 0:
+
+			# lowest rank of position player that will be joining team
+			# eg. if there are two open the C slots and 2 centers expected to go in next round, the 4th best C will not be "on the team"
+			# n = # of slots open + number of players in that position to be expected to be drafted
+			n = pos[pos_dict[p]] + len(exp_players_drafted.loc[exp_players_drafted['Position'] == p])
+
+			# get n+1 players in that position
+			players_in_pos = players.loc[players.Position == p].head(n+1)
 
 			# if position is wild card
 			if p == 'X':
@@ -55,18 +61,14 @@ def make_draft_pick(players,drafts,ref_pos,num_teams):
 				# eg. if there are 2 center slots still open, drop the top 2 centers
 				for x in pos_dict:
 					players_in_pos = players_in_pos.append(players.loc[players.Position == x].iloc[pos[pos_dict[x]]:])
-
-
-			num_exp_player_in_pos = len(exp_players_drafted.loc[exp_players_drafted['Position'] == p])
-					
+		
 			# if there are available players in that position and players expected to be drafted in that position
 			if (len(players_in_pos) > 0): 
 				players_in_pos = players_in_pos.sort_values(['CPG'], ascending=False)
 				best_player = players_in_pos.iloc[[0]] # best player in that position
 				top_players = top_players.append(best_player[['Player','Position','CPG']], sort=True)
 
-				# dCPG = CPG of best player - CPG of nth best player, where n = # of slots open + number of players in that position to be expected to be drafted
-				n = pos[pos_dict[p]] + num_exp_player_in_pos
+				# dCPG = CPG of best player - CPG of nth best player
 				top_players.iloc[-1, top_players.columns.get_loc('dCPG')] = float(top_players.iloc[len(top_players)-1].CPG - players_in_pos.iloc[n].CPG)	
 			
 
@@ -77,7 +79,7 @@ def make_draft_pick(players,drafts,ref_pos,num_teams):
 
 
 	# return player with highest dCPG, or if all zero return player with highest CPG
-	if top_players.loc[0,'Player'] > 0: return top_players.loc[0,'Player']
+	if len(top_players.loc[0,'Player']) > 0: return top_players.loc[0,'Player']
 	else: return top_players.loc[top_players.index(top_players.CPG), 'Player']
 		
 def eval_players(df):

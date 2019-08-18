@@ -13,34 +13,38 @@ import operations
 
 def main():
 	#get players
-	df = pd.read_csv(settings.CSV_FILE_NAME)
+	try:
+		df = pd.read_csv(settings.CSV_FILE_NAME)
+	except:
+		import hockey_reference_scraper as hrs
+		hrs.pull_all_historical_data(2018, 2019,settings.CSV_FILE_NAME[0:-4])
+		df = pd.read_csv(settings.CSV_FILE_NAME)
 
-	print_live = 0
+	print_live = 0 # 1 = print while draft, 0 = print rosters at end
 
 	# roster positions [C, LW, RW, D, G, Bonus]
 	pos = [4,4,4,5,3,6]
 
 	# number of rounds (# of players to be drafted)
-	num_rounds = sum(pos)
+	num_rounds = 5#sum(pos)
 
 	# teams
 	teams = [human_gm, yahoo_gm, subtractive_gm, greedy_gm]
 
 	# simulate the draft
 	draft = operations.draft(teams,df,num_rounds,pos,print_live)
-	if print_live == 0: print(draft)
+	if print_live == 0: print(draft[['Player','Position','Team']])
 
 	for i in range(len(teams)):
 		
 		score = 0
-		drafted_players = draft[draft.Team == teams[i].get_team_name()].reset_index(drop=True)
-		#drafted_players = drafted_players.reset_index(drop=True)
+		#drafted_players = draft[draft.Team == teams[i].get_team_name()].reset_index(drop=True)
+		drafted_players = draft[draft.ID == i].reset_index(drop=True)
+		players = fanager.get_CPG(df).reset_index(drop=True)
 
 		for p in range(len(drafted_players)):
 			player_name = drafted_players.loc[p,"Player"]
-			player = df[df.Player == player_name]
-			player = fanager.get_CPG(player).reset_index(drop=True) # get player details from main dataframe
-			score = score + player.loc[0,"CPG"]
+			score = score + float(players.loc[players['Player']==player_name, 'CPG'])
 
 
 		print(teams[i].get_team_name(), score)

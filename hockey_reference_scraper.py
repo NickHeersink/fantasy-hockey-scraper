@@ -147,7 +147,7 @@ def pull_league_data_only():
 	yahoo_scraper.store_info(df, settings.CSV_FILE_NAME)
 
 
-def pull_all_historical_data(start_year, end_year):
+def pull_all_historical_data(start_year, end_year, file_name=None):
 	for current_year in range(start_year, end_year):
 		print('Pulling data for ' + str(current_year))
 
@@ -158,7 +158,8 @@ def pull_all_historical_data(start_year, end_year):
 
 		df = clean_up_dataframe(df)
 
-		yahoo_scraper.store_info(df, 'all_player_data_' + str(current_year) + '.csv')
+		if file_name == None: yahoo_scraper.store_info(df, 'all_player_data_' + str(current_year) + '.csv')
+		else: yahoo_scraper.store_info(df, file_name+'.csv')
 
 
 def main():
